@@ -46,7 +46,7 @@ func (j *job) generateTasks() error {
 		}
 
 		if len(exercises) == 0 {
-			log.Println("No exercises found for level N3")
+			log.Printf("No exercises found for level %s", level)
 			continue
 		}
 

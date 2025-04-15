@@ -22,7 +22,7 @@ type Config struct {
 	Port             int    `yaml:"port"`
 	DBPath           string `yaml:"db_path"`
 	TelegramBotToken string `yaml:"telegram_bot_token"`
-	OpenAIToken      string `yaml:"openai_token"`
+	OpenAIKey        string `yaml:"openai_key"`
 	ExternalURL      string `yaml:"external_url"`
 }
 
@@ -68,7 +68,7 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	openaiClient := ai.NewClient(cfg.OpenAIToken)
+	openaiClient := ai.NewClient(cfg.OpenAIKey)
 
 	bot, err := telegram.New(cfg.TelegramBotToken)
 	if err != nil {
