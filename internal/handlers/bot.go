@@ -31,8 +31,6 @@ type Storager interface {
 
 type OpenAIClient interface {
 	CheckExercise(s db.Submission) (ai.ExerciseFeedback, error)
-	CreateBatchTask(levels []string, existing map[string][]string, tasksPerLevel int) (*ai.BatchTask, error)
-	GetBatchResults(batchID string) (ai.GeneratedTaskList, bool, error)
 }
 
 type handler struct {
@@ -157,7 +155,12 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 			msg.Text = "Ошибка при получении задания. Попробуй позже."
 			log.Printf("Failed to get next exercise: %v", err)
 		} else {
-			msg.Text = fmt.Sprintf("Задание:\n\nПереведи: %s", exercise.Russian)
+			switch exercise.Type {
+			case db.ExerciseTypeQuestion:
+				msg.Text = fmt.Sprintf("Задание:\n\nОтветь на вопрос: %s", exercise.Question)
+			case db.ExerciseTypeTranslation:
+				msg.Text = fmt.Sprintf("Задание:\n\nПереведи: %s", exercise.Question)
+			}
 			if err := h.db.MarkExerciseSent(chatID, exercise.ID); err != nil {
 				log.Printf("Failed to mark exercise as sent: %v", err)
 			}
@@ -174,15 +177,12 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 			log.Printf("Failed to get exercise: %v", err)
 			break
 		}
-
-		hint := fmt.Sprintf("Подсказка:\n\nГрамматика: %s\nСлова: %s",
-			exercise.GrammarHint, exercise.WordHint)
-		msg.Text = hint
+		msg.Text = exercise.Explanation
 	case "level":
 		msg.Text = "Выбери уровень:"
 		keyboard := tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData("Beginner", "level:beginner"),
+				tgbotapi.NewInlineKeyboardButtonData("Beginner", "level:BEGINNER"),
 				tgbotapi.NewInlineKeyboardButtonData("N5", "level:N5"),
 				tgbotapi.NewInlineKeyboardButtonData("N4", "level:N4"),
 				tgbotapi.NewInlineKeyboardButtonData("N3", "level:N3"),

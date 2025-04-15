@@ -21,14 +21,14 @@ type User struct {
 }
 
 type Exercise struct {
-	ID              int64     `db:"id" json:"id"`
-	Level           string    `db:"level" json:"level"`                       // например: 'N5', 'N4'
-	Russian         string    `db:"russian" json:"russian"`                   // текст задания на русском
-	CorrectJapanese string    `db:"correct_japanese" json:"correct_japanese"` // эталонный перевод на японском
-	Topic           string    `db:"topic" json:"topic"`                       // опционально: тема (еда, семья, и т.д.)
-	GrammarHint     string    `db:"grammar_hint" json:"grammar_hint"`         // грамматическая подсказка
-	WordHint        string    `db:"word_hint" json:"word_hint"`               // подсказка по слову
-	CreatedAt       time.Time `db:"created_at" json:"created_at"`             // дата создания задания
+	ID            int64     `db:"id" json:"id"`
+	Level         string    `db:"level" json:"level"`
+	Question      string    `db:"question" json:"question"`
+	CorrectAnswer string    `db:"correct_answer" json:"correct_answer"`
+	Topic         string    `db:"topic" json:"topic"`
+	Type          string    `db:"type" json:"type"`
+	Explanation   string    `db:"explanation" json:"explanation"`
+	CreatedAt     time.Time `db:"created_at" json:"created_at"`
 }
 
 type Submission struct {
@@ -156,11 +156,11 @@ func ConnectDB(dbPath string) (*storage, error) {
 	   CREATE TABLE IF NOT EXISTS exercises (
 			id INTEGER PRIMARY KEY,
 			level TEXT,
-			russian TEXT,
-			correct_japanese TEXT,
+			type TEXT DEFAULT 'translation',
+			question TEXT,
+			correct_answer TEXT,
 			topic TEXT,
-			grammar_hint TEXT,
-			word_hint TEXT,
+			explanation TEXT,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	   );
 		CREATE TABLE IF NOT EXISTS user_submissions (
@@ -192,6 +192,11 @@ func NewStorage(db *sql.DB) *storage {
 		db: db,
 	}
 }
+
+var (
+	ExerciseTypeTranslation = "translation"
+	ExerciseTypeQuestion    = "question"
+)
 
 func (s *storage) Health() (HealthStats, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
@@ -254,11 +259,11 @@ func (s *storage) GetSubmissionByID(ctx context.Context, id int64) (Submission, 
 				json_object(
 					'id', e.id,
 					'level', e.level,
-					'russian', e.russian,
-					'correct_japanese', e.correct_japanese,
+					'question', e.question,
+					'correct_answer', e.correct_answer,
 					'topic', e.topic,
-					'grammar_hint', e.grammar_hint,
-					'word_hint', e.word_hint
+				    'type', e.type,
+					'explanation', e.explanation
 				) AS exercise
 				FROM user_submissions us
 				JOIN exercises e ON us.exercise_id = e.id
@@ -300,7 +305,7 @@ func (s *storage) SaveTasksBatch(tasks []Exercise) error {
 		return err
 	}
 	stmt, err := tx.Prepare(`
-		INSERT INTO exercises (level, russian, correct_japanese, topic, grammar_hint, word_hint)
+		INSERT INTO exercises (level, question, correct_answer, topic, explanation, type)
 		VALUES (?, ?, ?, '', ?, ?)
 	`)
 
@@ -313,10 +318,10 @@ func (s *storage) SaveTasksBatch(tasks []Exercise) error {
 	for _, task := range tasks {
 		if _, err := stmt.Exec(
 			task.Level,
-			task.Russian,
-			task.CorrectJapanese,
-			task.GrammarHint,
-			task.WordHint,
+			task.Question,
+			task.CorrectAnswer,
+			task.Explanation,
+			task.Type,
 		); err != nil {
 			tx.Rollback()
 			return err
@@ -341,7 +346,7 @@ func (s *storage) GetUser(telegramID int64) (*User, error) {
 //GetExercisesByLevel
 
 func (s *storage) GetExercisesByLevel(level string) ([]Exercise, error) {
-	query := `SELECT id, level, russian, correct_japanese, topic, grammar_hint, word_hint, created_at FROM exercises WHERE level = ?`
+	query := `SELECT id, level, question, correct_answer, topic, explanation, type, created_at FROM exercises WHERE level = ?`
 	rows, err := s.db.Query(query, level)
 	if err != nil {
 		return nil, fmt.Errorf("error querying exercises: %w", err)
@@ -351,7 +356,31 @@ func (s *storage) GetExercisesByLevel(level string) ([]Exercise, error) {
 	var exercises []Exercise
 	for rows.Next() {
 		var exercise Exercise
-		if err := rows.Scan(&exercise.ID, &exercise.Level, &exercise.Russian, &exercise.CorrectJapanese, &exercise.Topic, &exercise.GrammarHint, &exercise.WordHint, &exercise.CreatedAt); err != nil {
+		if err := rows.Scan(&exercise.ID, &exercise.Level, &exercise.Question, &exercise.CorrectAnswer, &exercise.Topic, &exercise.Explanation, &exercise.Type, &exercise.CreatedAt); err != nil {
+			return nil, fmt.Errorf("error scanning exercise: %w", err)
+		}
+		exercises = append(exercises, exercise)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %w", err)
+	}
+
+	return exercises, nil
+}
+
+func (s *storage) GetExercisesByLevelAndType(level, exType string) ([]Exercise, error) {
+	query := `SELECT id, level, question, correct_answer, topic, explanation, type, created_at FROM exercises WHERE level = ? AND type = ?`
+	rows, err := s.db.Query(query, level, exType)
+	if err != nil {
+		return nil, fmt.Errorf("error querying exercises: %w", err)
+	}
+	defer rows.Close()
+
+	var exercises []Exercise
+	for rows.Next() {
+		var exercise Exercise
+		if err := rows.Scan(&exercise.ID, &exercise.Level, &exercise.Question, &exercise.CorrectAnswer, &exercise.Topic, &exercise.Explanation, &exercise.Type, &exercise.CreatedAt); err != nil {
 			return nil, fmt.Errorf("error scanning exercise: %w", err)
 		}
 		exercises = append(exercises, exercise)
@@ -366,7 +395,7 @@ func (s *storage) GetExercisesByLevel(level string) ([]Exercise, error) {
 
 func (s *storage) GetNextExerciseForUser(userID int64, level string) (Exercise, error) {
 	query := `
-		SELECT e.id, e.level, e.russian, e.correct_japanese, e.topic, e.grammar_hint, e.word_hint, e.created_at
+		SELECT e.id, e.level, e.question, e.correct_answer, e.topic, e.explanation, e.type, e.created_at
 		FROM exercises e
 		LEFT JOIN user_submissions ue ON e.id = ue.exercise_id AND ue.user_id = ?
 		WHERE e.level = ? AND ue.exercise_id IS NULL
@@ -376,8 +405,8 @@ func (s *storage) GetNextExerciseForUser(userID int64, level string) (Exercise, 
 	exercise := Exercise{}
 
 	err := s.db.QueryRow(query, userID, level).Scan(
-		&exercise.ID, &exercise.Level, &exercise.Russian, &exercise.CorrectJapanese,
-		&exercise.Topic, &exercise.GrammarHint, &exercise.WordHint, &exercise.CreatedAt,
+		&exercise.ID, &exercise.Level, &exercise.Question, &exercise.CorrectAnswer,
+		&exercise.Topic, &exercise.Explanation, &exercise.Type, &exercise.CreatedAt,
 	)
 
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
@@ -423,7 +452,7 @@ func (s *storage) ClearUserExercise(userID int64) error {
 func (s *storage) UpdateUserLevel(userID int64, level string) error {
 	updateQuery := `
 		UPDATE users	
-		SET level = ?	
+		SET level = ?, current_exercise_id = NULL
 		WHERE telegram_id = ?
 	`
 
@@ -447,10 +476,10 @@ func (s *storage) SaveUser(user *User) error {
 func (s *storage) GetExerciseByID(exerciseID int64) (Exercise, error) {
 	exercise := Exercise{}
 
-	query := `SELECT id, level, russian, correct_japanese, topic, grammar_hint, word_hint, created_at FROM exercises WHERE id = ?`
+	query := `SELECT id, level, question, correct_answer, topic, explanation, type, created_at FROM exercises WHERE id = ?`
 	err := s.db.QueryRow(query, exerciseID).Scan(
-		&exercise.ID, &exercise.Level, &exercise.Russian, &exercise.CorrectJapanese,
-		&exercise.Topic, &exercise.GrammarHint, &exercise.WordHint, &exercise.CreatedAt,
+		&exercise.ID, &exercise.Level, &exercise.Question, &exercise.CorrectAnswer,
+		&exercise.Topic, &exercise.Explanation, &exercise.Type, &exercise.CreatedAt,
 	)
 
 	if err != nil && errors.Is(err, sql.ErrNoRows) {

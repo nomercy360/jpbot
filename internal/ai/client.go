@@ -12,6 +12,7 @@ import (
 	"jpbot/internal/db"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -30,9 +31,9 @@ func NewClient(apiKey string) *Client {
 }
 
 type ExerciseFeedback struct {
-	Score      int    `json:"score" jsonschema_description:"Оценка перевода от 0 до 100"`
-	Feedback   string `json:"feedback" jsonschema_description:"Ошибки или комментарии к переводу"`
-	Suggestion string `json:"suggestion" jsonschema_description:"Улучшенный перевод"`
+	Score      int    `json:"score" jsonschema_description:"Оценка ответа от 0 до 100"`
+	Feedback   string `json:"feedback" jsonschema_description:"Ошибки или комментарии к ответу"`
+	Suggestion string `json:"suggestion" jsonschema_description:"Улучшенный ответ"`
 }
 
 func GenerateSchema[T any]() interface{} {
@@ -51,14 +52,27 @@ func (c *Client) CheckExercise(submission db.Submission) (ExerciseFeedback, erro
 	ctx := context.Background()
 	schema := GenerateSchema[ExerciseFeedback]()
 
-	systemPrompt := "Ты преподаватель японского языка. Проверь перевод с русского на японский по точности, грамматике и естественности. Ответь кратко в формате JSON: оценка (0-100), комментарий (ошибки или пояснение), улучшенный вариант."
-	userPrompt := fmt.Sprintf(`Оригинал: "%s"
+	var systemPrompt, userPrompt string
+
+	switch submission.Exercise.Type {
+	case db.ExerciseTypeTranslation:
+		systemPrompt = "Ты преподаватель японского языка. Проверь перевод с русского на японский по точности, грамматике и естественности. Ответь кратко в формате JSON: оценка (0-100), комментарий (ошибки или пояснение), улучшенный вариант."
+		userPrompt = fmt.Sprintf(`Оригинал: "%s"
 Перевод: 「%s」
 Правильный: 「%s」`,
-		submission.Exercise.Russian,
-		submission.UserInput,
-		submission.Exercise.CorrectJapanese,
-	)
+			submission.Exercise.Question,
+			submission.UserInput,
+			submission.Exercise.CorrectAnswer,
+		)
+
+	case db.ExerciseTypeQuestion:
+		systemPrompt = "Ты преподаватель японского языка. Проверь ответ на вопрос по точности, грамматике и естественности. Ответь кратко в формате JSON: оценка (0-100), комментарий (ошибки или пояснение), улучшенный вариант."
+		userPrompt = fmt.Sprintf(`Вопрос: "%s"
+Ответ: 「%s」`,
+			submission.Exercise.Question,
+			submission.UserInput,
+		)
+	}
 
 	resp, err := c.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
 		Model: openai.ChatModelGPT4o,
@@ -91,16 +105,31 @@ func (c *Client) CheckExercise(submission db.Submission) (ExerciseFeedback, erro
 	return feedback, nil
 }
 
-type GeneratedTask struct {
+type TranslationTask struct {
 	Russian     string `json:"russian" jsonschema_description:"Предложение на русском языке"`
 	Japanese    string `json:"japanese" jsonschema_description:"Перевод на японском языке"`
-	GrammarHint string `json:"grammar_hint" jsonschema_description:"Грамматическая подсказка для ученика"`
-	WordHint    string `json:"word_hint" jsonschema_description:"Словарная подсказка для ключевого слова"`
-	Level       string `json:"level" jsonschema_description:"Уровень сложности задания"`
+	Explanation string `json:"explanation" jsonschema_description:"Подсказка по грамматике или сложным словам"`
 }
 
-type GeneratedTaskList struct {
-	Tasks []GeneratedTask `json:"tasks" jsonschema_description:"Список сгенерированных заданий"`
+type QuestionTask struct {
+	Question    string `json:"question" jsonschema_description:"Вопрос на японском языке"`
+	Explanation string `json:"explanation" jsonschema_description:"Подсказка по грамматике, словам или контексту"`
+}
+
+type QuestionTaskList struct {
+	Tasks []QuestionTask `json:"tasks" jsonschema_description:"Список сгенерированных заданий"`
+}
+
+func (t QuestionTaskList) GetTasks() []QuestionTask {
+	return t.Tasks
+}
+
+type TranslationTaskList struct {
+	Tasks []TranslationTask `json:"tasks" jsonschema_description:"Список сгенерированных заданий"`
+}
+
+func (t TranslationTaskList) GetTasks() []TranslationTask {
+	return t.Tasks
 }
 
 type BatchTask struct {
@@ -110,7 +139,7 @@ type BatchTask struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
-func (c *Client) CreateBatchTask(levels []string, existing map[string][]string, tasksPerLevel int) (*BatchTask, error) {
+func (c *Client) CreateBatchTask(levels []string, types []string, existing map[string][]string, tasksPerLevel int) (*BatchTask, error) {
 	ctx := context.Background()
 
 	tempFile, err := os.CreateTemp("", "batch_*.jsonl")
@@ -121,65 +150,84 @@ func (c *Client) CreateBatchTask(levels []string, existing map[string][]string, 
 
 	requestCount := 0
 	for _, level := range levels {
-		existingList := ""
-		if len(existing[level]) > 0 {
-			for _, e := range existing[level] {
+		for _, exType := range types {
+			key := fmt.Sprintf("%s|%s", exType, level)
+			existingList := ""
+			for _, e := range existing[key] {
 				existingList += fmt.Sprintf("- %s\n", e)
 			}
-		}
 
-		systemPrompt := "Ты преподаватель японского языка. Твоя задача — создать простые и полезные упражнения на перевод с русского на японский язык. Каждое упражнение должно содержать грамматическую подсказку и ключевое слово с объяснением."
+			var systemPrompt, userPrompt string
+			var schema any
 
-		userPrompt := fmt.Sprintf(`Сгенерируй %d уникальных предложений уровня %s. Укажи:
+			switch exType {
+			case db.ExerciseTypeTranslation:
+				systemPrompt = "Ты преподаватель японского языка. Твоя задача — создать простые и полезные упражнения на перевод с русского на японский язык. Каждое упражнение должно содержать грамматическую подсказку и ключевое слово с объяснением."
+
+				userPrompt = fmt.Sprintf(`Сгенерируй %d уникальных предложений уровня %s. Укажи:
 - Оригинал на русском
 - Перевод на японский
-- Грамматическую подсказку, если используется сложная грамматика
-- Подсказку по неочевидным или сложным словам
+- Грамматическую подсказку и/или по неочевидным или сложным словам
 
 Не используй предложения ниже:
 %s
-`, tasksPerLevel, level, existingList)
+				`, tasksPerLevel, level, existingList)
+				schema = GenerateSchema[TranslationTaskList]()
 
-		schema := GenerateSchema[GeneratedTaskList]()
+			case db.ExerciseTypeQuestion:
+				systemPrompt = "Ты преподаватель японского. Сгенерируй короткие вопросы, на которые можно ответить на японском языке. Они должны быть интересны и полезны для практики."
+				userPrompt = fmt.Sprintf(`Сгенерируй %d уникальных вопросов на японском языке уровня %s. Вопросы могут быть о пользователе, повседневной жизни, культуре или языке. Укажи:
+- Вопрос на японском
+- Эталонный ответ на японском
+- Подсказку по грамматике, словам или контексту
+Не используй вопросы ниже:
+%s
+`, tasksPerLevel/2, level, existingList)
+				schema = GenerateSchema[QuestionTaskList]()
 
-		batchRequest := map[string]interface{}{
-			"custom_id": fmt.Sprintf("request-%d-%s", requestCount, level),
-			"method":    "POST",
-			"url":       openai.BatchNewParamsEndpointV1ChatCompletions,
-			"body": map[string]interface{}{
-				"model": openai.ChatModelGPT4o,
-				"messages": []interface{}{
-					map[string]interface{}{
-						"role":    "system",
-						"content": systemPrompt,
+			default:
+				continue
+			}
+
+			batchRequest := map[string]interface{}{
+				"custom_id": fmt.Sprintf("request-%d-%s-%s", requestCount, exType, level),
+				"method":    "POST",
+				"url":       openai.BatchNewParamsEndpointV1ChatCompletions,
+				"body": map[string]interface{}{
+					"model": openai.ChatModelGPT4o,
+					"messages": []interface{}{
+						map[string]interface{}{
+							"role":    "system",
+							"content": systemPrompt,
+						},
+						map[string]interface{}{
+							"role":    "user",
+							"content": userPrompt,
+						},
 					},
-					map[string]interface{}{
-						"role":    "user",
-						"content": userPrompt,
+					"response_format": map[string]interface{}{
+						"type": "json_schema",
+						"json_schema": map[string]interface{}{
+							"name":        "generated_task_list",
+							"description": "Новые упражнения для перевода",
+							"schema":      schema,
+							"strict":      true,
+						},
 					},
 				},
-				"response_format": map[string]interface{}{
-					"type": "json_schema",
-					"json_schema": map[string]interface{}{
-						"name":        "generated_task_list",
-						"description": "Новые упражнения для перевода",
-						"schema":      schema,
-						"strict":      true,
-					},
-				},
-			},
-		}
+			}
 
-		requestJSON, err := json.Marshal(batchRequest)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal batch request: %w", err)
-		}
+			requestJSON, err := json.Marshal(batchRequest)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal batch request: %w", err)
+			}
 
-		if _, err := tempFile.WriteString(string(requestJSON) + "\n"); err != nil {
-			return nil, fmt.Errorf("failed to write to temp file: %w", err)
-		}
+			if _, err := tempFile.WriteString(string(requestJSON) + "\n"); err != nil {
+				return nil, fmt.Errorf("failed to write to temp file: %w", err)
+			}
 
-		requestCount++
+			requestCount++
+		}
 	}
 
 	_, _ = tempFile.Seek(0, 0)
@@ -210,10 +258,32 @@ func (c *Client) CreateBatchTask(levels []string, existing map[string][]string, 
 	}, nil
 }
 
-func (c *Client) GetBatchResults(batchID string) (GeneratedTaskList, bool, error) {
+func getLevelAndTypeFromCustomID(customID string) (string, string) {
+	parts := strings.Split(customID, "-")
+	if len(parts) < 3 {
+		return "", ""
+	}
+
+	level := parts[len(parts)-1]
+	exType := parts[len(parts)-2]
+
+	return level, exType
+}
+
+type GeneratedTaskList[T any] interface {
+	GetTasks() []T
+}
+
+type BatchResult struct {
+	Type              string      `json:"type"`
+	Level             string      `json:"level"`
+	GeneratedTaskList interface{} `json:"generated_task_list"` // Используем interface{} для гибкости
+}
+
+func (c *Client) GetBatchResults(batchID string) ([]BatchResult, bool, error) {
 	ctx := context.Background()
 
-	var results GeneratedTaskList
+	var results []BatchResult
 
 	batch, err := c.client.Batches.Get(ctx, batchID)
 	if err != nil {
@@ -233,7 +303,6 @@ func (c *Client) GetBatchResults(batchID string) (GeneratedTaskList, bool, error
 	if err != nil {
 		return results, false, fmt.Errorf("failed to get file content: %w", err)
 	}
-
 	defer resp.Body.Close()
 
 	content, err := io.ReadAll(resp.Body)
@@ -265,12 +334,33 @@ func (c *Client) GetBatchResults(batchID string) (GeneratedTaskList, bool, error
 			return results, false, fmt.Errorf("failed to parse batch response: %w", err)
 		}
 
-		var taskList GeneratedTaskList
-		if err := json.Unmarshal([]byte(batchResponse.Response.Body.Choices[0].Message.Content), &taskList); err != nil {
-			return results, false, fmt.Errorf("failed to parse task list: %w", err)
+		level, exType := getLevelAndTypeFromCustomID(batchResponse.CustomID)
+
+		var result BatchResult
+		result.Type = exType
+		result.Level = level
+
+		switch exType {
+		case db.ExerciseTypeTranslation:
+			var taskList TranslationTaskList
+			if err := json.Unmarshal([]byte(batchResponse.Response.Body.Choices[0].Message.Content), &taskList); err != nil {
+				return results, false, fmt.Errorf("failed to parse translation task list: %w", err)
+			}
+			result.GeneratedTaskList = taskList // Присваиваем напрямую как interface{}
+
+		case db.ExerciseTypeQuestion:
+			var taskList QuestionTaskList
+			if err := json.Unmarshal([]byte(batchResponse.Response.Body.Choices[0].Message.Content), &taskList); err != nil {
+				return results, false, fmt.Errorf("failed to parse question task list: %w", err)
+			}
+			result.GeneratedTaskList = taskList // Присваиваем напрямую как interface{}
+
+		default:
+			log.Printf("Unknown exercise type: %s", exType)
+			continue
 		}
 
-		results.Tasks = append(results.Tasks, taskList.Tasks...)
+		results = append(results, result)
 	}
 
 	return results, true, nil

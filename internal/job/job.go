@@ -15,11 +15,12 @@ type Storager interface {
 	SaveBatchMeta(id string, status string) error
 	GetPendingBatches() ([]string, error)
 	UpdateBatchStatus(id string, status string) error
+	GetExercisesByLevelAndType(level, exType string) ([]db.Exercise, error)
 }
 
 type OpenAIClient interface {
-	CreateBatchTask(levels []string, existing map[string][]string, tasksPerLevel int) (*ai.BatchTask, error)
-	GetBatchResults(batchID string) (ai.GeneratedTaskList, bool, error)
+	CreateBatchTask(levels, types []string, existing map[string][]string, tasksPerLevel int) (*ai.BatchTask, error)
+	GetBatchResults(batchID string) ([]ai.BatchResult, bool, error)
 }
 
 type job struct {
@@ -37,25 +38,24 @@ func NewJob(db Storager, openaiClient *ai.Client) *job {
 
 func (j *job) generateTasks() error {
 	levels := []string{db.LevelN3, db.LevelN4, db.LevelN5, db.LevelN2, db.LevelN1, db.LevelBeginner}
+	types := []string{db.ExerciseTypeQuestion, db.ExerciseTypeTranslation}
 	existing := make(map[string][]string)
 
 	for _, level := range levels {
-		exercises, err := j.db.GetExercisesByLevel(level)
-		if err != nil {
-			return fmt.Errorf("failed to get exercises: %w", err)
-		}
+		for _, exType := range types {
+			exercises, err := j.db.GetExercisesByLevelAndType(level, exType)
+			if err != nil {
+				return fmt.Errorf("failed to get exercises for level %s and type %s: %w", level, exType, err)
+			}
 
-		if len(exercises) == 0 {
-			log.Printf("No exercises found for level %s", level)
-			continue
-		}
-
-		for _, exercise := range exercises {
-			existing[level] = append(existing[level], exercise.Russian)
+			for _, exercise := range exercises {
+				key := fmt.Sprintf("%s|%s", exType, level)
+				existing[key] = append(existing[key], exercise.Question)
+			}
 		}
 	}
 
-	batch, err := j.openaiClient.CreateBatchTask(levels, existing, 5)
+	batch, err := j.openaiClient.CreateBatchTask(levels, types, existing, 5)
 	if err != nil {
 		log.Fatalf("Failed to generate tasks: %v", err)
 	}
@@ -84,15 +84,41 @@ func (j *job) syncBatchResults() error {
 
 		if ok {
 			var exercises []db.Exercise
-			for _, task := range result.Tasks {
-				exercise := db.Exercise{
-					Russian:         task.Russian,
-					CorrectJapanese: task.Japanese,
-					GrammarHint:     task.GrammarHint,
-					WordHint:        task.WordHint,
-					Level:           task.Level,
+			for _, res := range result {
+				switch res.Type {
+				case db.ExerciseTypeQuestion:
+					taskList, ok := res.GeneratedTaskList.(ai.QuestionTaskList)
+					if !ok {
+						log.Printf("Failed to convert task list to QuestionTaskList: %v", res.GeneratedTaskList)
+						continue
+					}
+					for _, task := range taskList.GetTasks() {
+						exercise := db.Exercise{
+							Level:       res.Level,
+							Type:        res.Type,
+							Question:    task.Question,
+							Explanation: task.Explanation,
+						}
+						exercises = append(exercises, exercise)
+					}
+
+				case db.ExerciseTypeTranslation:
+					taskList, ok := res.GeneratedTaskList.(ai.TranslationTaskList)
+					if !ok {
+						log.Printf("Failed to convert task list to TranslationTaskList: %v", res.GeneratedTaskList)
+						continue
+					}
+					for _, task := range taskList.GetTasks() {
+						exercise := db.Exercise{
+							Level:         res.Level,
+							Type:          res.Type,
+							Question:      task.Russian,
+							CorrectAnswer: task.Japanese,
+							Explanation:   task.Explanation,
+						}
+						exercises = append(exercises, exercise)
+					}
 				}
-				exercises = append(exercises, exercise)
 			}
 
 			if err := j.db.SaveTasksBatch(exercises); err != nil {
