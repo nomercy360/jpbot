@@ -55,7 +55,7 @@ func (j *job) generateTasks() error {
 		}
 	}
 
-	batch, err := j.openaiClient.CreateBatchTask(levels, existing, 3)
+	batch, err := j.openaiClient.CreateBatchTask(levels, existing, 5)
 	if err != nil {
 		log.Fatalf("Failed to generate tasks: %v", err)
 	}
@@ -109,13 +109,13 @@ func (j *job) syncBatchResults() error {
 }
 
 func (j *job) Run() {
-	//if err := j.generateTasks(); err != nil {
-	//	log.Printf("Failed to generate tasks: %v", err)
-	//}
-	//
-	//if err := j.syncBatchResults(); err != nil {
-	//	log.Printf("Failed to sync batch results: %v", err)
-	//}
+	if err := j.generateTasks(); err != nil {
+		log.Printf("Failed to generate tasks: %v", err)
+	}
+
+	if err := j.syncBatchResults(); err != nil {
+		log.Printf("Failed to sync batch results: %v", err)
+	}
 
 	ticker := time.NewTicker(24 * time.Hour)
 
