@@ -109,12 +109,12 @@ func (j *job) syncBatchResults() error {
 }
 
 func (j *job) Run() {
-	if err := j.generateTasks(); err != nil {
-		log.Printf("Failed to generate tasks: %v", err)
-	}
-
 	if err := j.syncBatchResults(); err != nil {
 		log.Printf("Failed to sync batch results: %v", err)
+	}
+
+	if err := j.generateTasks(); err != nil {
+		log.Printf("Failed to generate tasks: %v", err)
 	}
 
 	ticker := time.NewTicker(24 * time.Hour)
@@ -124,11 +124,11 @@ func (j *job) Run() {
 	for {
 		select {
 		case <-ticker.C:
-			if err := j.generateTasks(); err != nil {
-				log.Printf("Failed to generate tasks: %v", err)
-			}
 			if err := j.syncBatchResults(); err != nil {
 				log.Printf("Failed to sync batch results: %v", err)
+			}
+			if err := j.generateTasks(); err != nil {
+				log.Printf("Failed to generate tasks: %v", err)
 			}
 		}
 	}
