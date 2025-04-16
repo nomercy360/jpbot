@@ -11,7 +11,6 @@ import (
 	"io"
 	"jpbot/internal/db"
 	"log"
-	"os"
 	"strings"
 	"time"
 )
@@ -23,6 +22,7 @@ type Client struct {
 func NewClient(apiKey string) *Client {
 	client := openai.NewClient(
 		option.WithAPIKey(apiKey),
+		option.WithBaseURL("https://api.x.ai/v1"),
 	)
 
 	return &Client{
@@ -75,7 +75,7 @@ func (c *Client) CheckExercise(submission db.Submission) (ExerciseFeedback, erro
 	}
 
 	resp, err := c.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-		Model: openai.ChatModelGPT4o,
+		Model: "grok-3-fast-beta",
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.SystemMessage(systemPrompt),
 			openai.UserMessage(userPrompt),
@@ -139,16 +139,11 @@ type BatchTask struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
-func (c *Client) CreateBatchTask(levels []string, types []string, existing map[string][]string, tasksPerLevel int) (*BatchTask, error) {
+func (c *Client) CreateBatchTask(levels []string, types []string, existing map[string][]string, tasksPerLevel int) ([]BatchResult, error) {
 	ctx := context.Background()
-
-	tempFile, err := os.CreateTemp("", "batch_*.jsonl")
-	if err != nil {
-		return nil, fmt.Errorf("failed to create temp file: %w", err)
-	}
-	defer tempFile.Close()
-
+	var results []BatchResult
 	requestCount := 0
+
 	for _, level := range levels {
 		for _, exType := range types {
 			key := fmt.Sprintf("%s|%s", exType, level)
@@ -163,99 +158,94 @@ func (c *Client) CreateBatchTask(levels []string, types []string, existing map[s
 			switch exType {
 			case db.ExerciseTypeTranslation:
 				systemPrompt = "Ты преподаватель японского языка. Твоя задача — создать простые и полезные упражнения на перевод с русского на японский язык. Каждое упражнение должно содержать грамматическую подсказку и ключевое слово с объяснением."
-
 				userPrompt = fmt.Sprintf(`Сгенерируй %d уникальных предложений уровня %s. Укажи:
 - Оригинал на русском
 - Перевод на японский
-- Грамматическую подсказку и/или по неочевидным или сложным словам
-
+- Краткий разбор предложения, включающий:
+  - Значение каждого ключевого слова или фразы (с ромадзи для чтения).
+  - Грамматические конструкции (например, частицы, формы глаголов).
+  - Роль каждого элемента в предложении (например, наречие времени, объектный показатель).
 Не используй предложения ниже:
 %s
-				`, tasksPerLevel, level, existingList)
+`, tasksPerLevel, level, existingList)
 				schema = GenerateSchema[TranslationTaskList]()
 
 			case db.ExerciseTypeQuestion:
 				systemPrompt = "Ты преподаватель японского. Сгенерируй короткие вопросы, на которые можно ответить на японском языке. Они должны быть интересны и полезны для практики."
 				userPrompt = fmt.Sprintf(`Сгенерируй %d уникальных вопросов на японском языке уровня %s. Вопросы могут быть о пользователе, повседневной жизни, культуре или языке. Укажи:
 - Вопрос на японском
-- Эталонный ответ на японском
-- Подсказку по грамматике, словам или контексту
+- Краткий разбор вопроса, включающий:
+  - Значение каждого ключевого слова или фразы (с ромадзи для чтения).
+  - Грамматические конструкции (например, частицы, формы глаголов).
+  - Роль каждого элемента в предложении (например, наречие времени, объектный показатель).
 Не используй вопросы ниже:
 %s
-`, tasksPerLevel/2, level, existingList)
+`, tasksPerLevel, level, existingList)
 				schema = GenerateSchema[QuestionTaskList]()
 
 			default:
+				log.Printf("Unknown exercise type: %s", exType)
 				continue
 			}
 
-			batchRequest := map[string]interface{}{
-				"custom_id": fmt.Sprintf("request-%d-%s-%s", requestCount, exType, level),
-				"method":    "POST",
-				"url":       openai.BatchNewParamsEndpointV1ChatCompletions,
-				"body": map[string]interface{}{
-					"model": openai.ChatModelGPT4o,
-					"messages": []interface{}{
-						map[string]interface{}{
-							"role":    "system",
-							"content": systemPrompt,
-						},
-						map[string]interface{}{
-							"role":    "user",
-							"content": userPrompt,
-						},
-					},
-					"response_format": map[string]interface{}{
-						"type": "json_schema",
-						"json_schema": map[string]interface{}{
-							"name":        "generated_task_list",
-							"description": "Новые упражнения для перевода",
-							"schema":      schema,
-							"strict":      true,
+			log.Printf("Sending request for %s-%s", exType, level)
+
+			// Make a synchronous API call instead of creating a batch
+			resp, err := c.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+				Model: "grok-3-beta",
+				Messages: []openai.ChatCompletionMessageParamUnion{
+					openai.SystemMessage(systemPrompt),
+					openai.UserMessage(userPrompt),
+				},
+				ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
+					OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{
+						JSONSchema: openai.ResponseFormatJSONSchemaJSONSchemaParam{
+							Name:        "generated_task_list",
+							Description: openai.String("Новые упражнения для перевода"),
+							Schema:      schema,
+							Strict:      openai.Bool(true),
 						},
 					},
 				},
-			}
+			})
 
-			requestJSON, err := json.Marshal(batchRequest)
+			log.Printf("Received response for %s-%s", exType, level)
+
 			if err != nil {
-				return nil, fmt.Errorf("failed to marshal batch request: %w", err)
+				return nil, fmt.Errorf("failed to generate tasks for %s-%s: %w", exType, level, err)
 			}
 
-			if _, err := tempFile.WriteString(string(requestJSON) + "\n"); err != nil {
-				return nil, fmt.Errorf("failed to write to temp file: %w", err)
+			// Parse the response
+			var result BatchResult
+			result.Type = exType
+			result.Level = level
+
+			switch exType {
+			case db.ExerciseTypeTranslation:
+				var taskList TranslationTaskList
+				if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &taskList); err != nil {
+					return nil, fmt.Errorf("failed to parse translation task list for %s-%s: %w", exType, level, err)
+				}
+				result.GeneratedTaskList = taskList
+
+			case db.ExerciseTypeQuestion:
+				var taskList QuestionTaskList
+				if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &taskList); err != nil {
+					return nil, fmt.Errorf("failed to parse question task list for %s-%s: %w", exType, level, err)
+				}
+				result.GeneratedTaskList = taskList
+
+			default:
+				log.Printf("Unknown exercise type in response: %s", exType)
+				continue
 			}
 
+			results = append(results, result)
 			requestCount++
 		}
 	}
 
-	_, _ = tempFile.Seek(0, 0)
-	file, err := c.client.Files.New(ctx, openai.FileNewParams{
-		File:    tempFile,
-		Purpose: openai.FilePurposeBatch,
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to upload batch file: %w", err)
-	}
-
-	batch, err := c.client.Batches.New(ctx, openai.BatchNewParams{
-		InputFileID:      file.ID,
-		Endpoint:         openai.BatchNewParamsEndpointV1ChatCompletions,
-		CompletionWindow: openai.BatchNewParamsCompletionWindow24h,
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to create batch: %w", err)
-	}
-
-	return &BatchTask{
-		ID:          batch.ID,
-		Status:      string(batch.Status),
-		InputFileID: batch.InputFileID,
-		CreatedAt:   time.Now(),
-	}, nil
+	return results, nil
 }
 
 func getLevelAndTypeFromCustomID(customID string) (string, string) {

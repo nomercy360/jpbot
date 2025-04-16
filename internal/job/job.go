@@ -19,7 +19,8 @@ type Storager interface {
 }
 
 type OpenAIClient interface {
-	CreateBatchTask(levels, types []string, existing map[string][]string, tasksPerLevel int) (*ai.BatchTask, error)
+	// CreateBatchTask(levels, types []string, existing map[string][]string, tasksPerLevel int) (*ai.BatchTask, error)
+	CreateBatchTask(levels []string, types []string, existing map[string][]string, tasksPerLevel int) ([]ai.BatchResult, error)
 	GetBatchResults(batchID string) ([]ai.BatchResult, bool, error)
 }
 
@@ -37,7 +38,7 @@ func NewJob(db Storager, openaiClient *ai.Client) *job {
 }
 
 func (j *job) generateTasks() error {
-	levels := []string{db.LevelN3, db.LevelN4, db.LevelN5, db.LevelN2, db.LevelN1, db.LevelBeginner}
+	levels := []string{db.LevelN3, db.LevelN4, db.LevelN5, db.LevelBeginner}
 	types := []string{db.ExerciseTypeQuestion, db.ExerciseTypeTranslation}
 	existing := make(map[string][]string)
 
@@ -55,16 +56,66 @@ func (j *job) generateTasks() error {
 		}
 	}
 
-	batch, err := j.openaiClient.CreateBatchTask(levels, types, existing, 5)
+	log.Printf("Starting task generation for levels: %v and types: %v", levels, types)
+
+	res, err := j.openaiClient.CreateBatchTask(levels, types, existing, 10)
 	if err != nil {
 		log.Fatalf("Failed to generate tasks: %v", err)
 	}
 
-	log.Printf("Generated task with ID: %s", batch.ID)
+	var exercises []db.Exercise
+	for _, res := range res {
+		switch res.Type {
+		case db.ExerciseTypeQuestion:
+			taskList, ok := res.GeneratedTaskList.(ai.QuestionTaskList)
+			if !ok {
+				log.Printf("Failed to convert task list to QuestionTaskList: %v", res.GeneratedTaskList)
+				continue
+			}
+			for _, task := range taskList.GetTasks() {
+				exercise := db.Exercise{
+					Level:       res.Level,
+					Type:        res.Type,
+					Question:    task.Question,
+					Explanation: task.Explanation,
+				}
+				exercises = append(exercises, exercise)
+			}
 
-	if err := j.db.SaveBatchMeta(batch.ID, "in_progress"); err != nil {
-		log.Printf("Failed to save batch meta: %v", err)
+		case db.ExerciseTypeTranslation:
+			taskList, ok := res.GeneratedTaskList.(ai.TranslationTaskList)
+			if !ok {
+				log.Printf("Failed to convert task list to TranslationTaskList: %v", res.GeneratedTaskList)
+				continue
+			}
+			for _, task := range taskList.GetTasks() {
+				exercise := db.Exercise{
+					Level:         res.Level,
+					Type:          res.Type,
+					Question:      task.Russian,
+					CorrectAnswer: task.Japanese,
+					Explanation:   task.Explanation,
+				}
+				exercises = append(exercises, exercise)
+			}
+		}
 	}
+
+	if err := j.db.SaveTasksBatch(exercises); err != nil {
+		log.Printf("Failed to save tasks from batch: %v", err)
+		//continue
+	}
+	//
+	//if err := j.db.UpdateBatchStatus(id, "completed"); err != nil {
+	//	log.Printf("Failed to update batch status: %v", err)
+	//}
+	//
+	//
+	//log.Printf("Generated task with ID: %s", batch.ID)
+	//
+	//if err := j.db.SaveBatchMeta(batch.ID, "in_progress"); err != nil {
+	//	log.Printf("Failed to save batch meta: %v", err)
+	//}
 
 	return nil
 }
@@ -135,9 +186,9 @@ func (j *job) syncBatchResults() error {
 }
 
 func (j *job) Run() {
-	if err := j.syncBatchResults(); err != nil {
-		log.Printf("Failed to sync batch results: %v", err)
-	}
+	//if err := j.syncBatchResults(); err != nil {
+	//	log.Printf("Failed to sync batch results: %v", err)
+	//}
 
 	if err := j.generateTasks(); err != nil {
 		log.Printf("Failed to generate tasks: %v", err)
