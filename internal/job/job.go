@@ -116,6 +116,21 @@ func (j *job) generateTasks() error {
 				}
 				exercises = append(exercises, exercise)
 			}
+		case db.ExerciseTypeGrammar:
+			taskList, ok := res.GeneratedTaskList.(ai.GrammarTaskList)
+			if !ok {
+				log.Printf("Failed to convert task list to GrammarTaskList: %v", res.GeneratedTaskList)
+				continue
+			}
+
+			for _, task := range taskList.GetTasks() {
+				exercise := db.Exercise{
+					Level:    res.Level,
+					Type:     res.Type,
+					Question: task.Question,
+				}
+				exercises = append(exercises, exercise)
+			}
 		}
 	}
 

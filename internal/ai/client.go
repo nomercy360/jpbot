@@ -87,6 +87,15 @@ func (c *Client) CheckExercise(submission db.Submission) (ExerciseFeedback, erro
 			submission.Exercise.Question,
 			submission.UserInput,
 		)
+	case db.ExerciseTypeGrammar:
+		systemPrompt = "Ты преподаватель японского языка. Проверь, правильно ли пользователь использовал указанную грамматическую конструкцию в своем предложении. Ответь кратко в формате JSON: оценка (0-100), комментарий (ошибки или пояснение), улучшенный вариант (если есть ошибки)."
+		userPrompt = fmt.Sprintf(`Грамматическая конструкция: "%s"
+Пользовательский ответ: 「%s」`,
+			submission.Exercise.Question,
+			submission.UserInput,
+		)
+	default:
+		return ExerciseFeedback{}, fmt.Errorf("unknown exercise type: %s", submission.Exercise.Type)
 	}
 
 	resp, err := c.grokClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
@@ -138,6 +147,10 @@ type AudioTask struct {
 	Explanation string `json:"explanation" jsonschema_description:"Подсказка по грамматике, словам или контексту"`
 }
 
+type GrammarTask struct {
+	Question string `json:"question" jsonschema_description:"Грамматическая конструкция и ее использование"`
+}
+
 type QuestionTaskList struct {
 	Tasks []QuestionTask `json:"tasks" jsonschema_description:"Список сгенерированных заданий"`
 }
@@ -159,6 +172,14 @@ type AudioTaskList struct {
 }
 
 func (t AudioTaskList) GetTasks() []AudioTask {
+	return t.Tasks
+}
+
+type GrammarTaskList struct {
+	Tasks []GrammarTask `json:"tasks" jsonschema_description:"Список сгенерированных заданий"`
+}
+
+func (t GrammarTaskList) GetTasks() []GrammarTask {
 	return t.Tasks
 }
 
@@ -226,6 +247,14 @@ func (c *Client) CreateBatchTask(levels []string, types []string, existing map[s
 %s
 `, tasksPerLevel, level, existingList)
 				schema = GenerateSchema[AudioTaskList]()
+			case db.ExerciseTypeGrammar:
+				systemPrompt = "Ты преподаватель японского языка. Твоя задача — создать упражнения для практики грамматических конструкций. Каждое задание должно содержать описание грамматической конструкции"
+				userPrompt = fmt.Sprintf(`Сгенерируй %d уникальных заданий на грамматику уровня %s. Укажи:
+- Грамматическую конструкцию (например, ～たい, ～ながら, ～てしまう) и ее использование.
+Не используй задания ниже:
+%s
+`, tasksPerLevel, level, existingList)
+				schema = GenerateSchema[GrammarTaskList]()
 			default:
 				log.Printf("Unknown exercise type: %s", exType)
 				continue
@@ -281,6 +310,12 @@ func (c *Client) CreateBatchTask(levels []string, types []string, existing map[s
 				var taskList AudioTaskList
 				if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &taskList); err != nil {
 					return nil, fmt.Errorf("failed to parse audio task list for %s-%s: %w", exType, level, err)
+				}
+				result.GeneratedTaskList = taskList
+			case db.ExerciseTypeGrammar:
+				var taskList GrammarTaskList
+				if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &taskList); err != nil {
+					return nil, fmt.Errorf("failed to parse grammar task list for %s-%s: %w", exType, level, err)
 				}
 				result.GeneratedTaskList = taskList
 			default:

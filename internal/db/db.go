@@ -201,6 +201,7 @@ var (
 	ExerciseTypeTranslation = "translation"
 	ExerciseTypeQuestion    = "question"
 	ExerciseTypeAudio       = "audio"
+	ExerciseTypeGrammar     = "grammar"
 )
 
 func (s *storage) Health() (HealthStats, error) {
@@ -429,6 +430,7 @@ func (s *storage) GetNextExerciseForUser(userID int64, level string) (Exercise, 
 		FROM exercises e
 		LEFT JOIN user_submissions ue ON e.id = ue.exercise_id AND ue.user_id = ?
 		WHERE e.level = ? AND ue.exercise_id IS NULL
+		ORDER BY RANDOM()
 		LIMIT 1
 	`
 

@@ -164,6 +164,8 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 				msg.Text = fmt.Sprintf("Задание:\n\nОтветь на вопрос: %s", exercise.Question)
 			case db.ExerciseTypeTranslation:
 				msg.Text = fmt.Sprintf("Задание:\n\nПереведи: %s", exercise.Question)
+			case db.ExerciseTypeGrammar:
+				msg.Text = fmt.Sprintf("Задание:\n\n%s\n\nТвой пример:", exercise.Question)
 			case db.ExerciseTypeAudio:
 				msg.Text = fmt.Sprintf("Задание:\n\nПрослушай аудио и ответь на вопрос: %s", exercise.Question)
 
