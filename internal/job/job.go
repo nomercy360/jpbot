@@ -39,7 +39,7 @@ func NewJob(db Storager, openaiClient *ai.Client) *job {
 
 func (j *job) generateTasks() error {
 	levels := []string{db.LevelN3, db.LevelN4, db.LevelN5, db.LevelBeginner}
-	types := []string{db.ExerciseTypeQuestion, db.ExerciseTypeTranslation}
+	types := []string{db.ExerciseTypeQuestion, db.ExerciseTypeTranslation, db.ExerciseTypeAudio}
 	existing := make(map[string][]string)
 
 	for _, level := range levels {
@@ -94,6 +94,24 @@ func (j *job) generateTasks() error {
 					Type:          res.Type,
 					Question:      task.Russian,
 					CorrectAnswer: task.Japanese,
+					Explanation:   task.Explanation,
+				}
+				exercises = append(exercises, exercise)
+			}
+		case db.ExerciseTypeAudio:
+			taskList, ok := res.GeneratedTaskList.(ai.AudioTaskList)
+			if !ok {
+				log.Printf("Failed to convert task list to AudioTaskList: %v", res.GeneratedTaskList)
+				continue
+			}
+
+			for _, task := range taskList.GetTasks() {
+				exercise := db.Exercise{
+					Level:         res.Level,
+					Type:          res.Type,
+					Question:      task.Question,
+					CorrectAnswer: task.Answer,
+					AudioText:     task.Text,
 					Explanation:   task.Explanation,
 				}
 				exercises = append(exercises, exercise)

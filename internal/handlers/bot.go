@@ -1,12 +1,15 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	telegram "github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 	"github.com/labstack/echo/v4"
+	"io"
 	"jpbot/internal/ai"
 	"jpbot/internal/db"
 	"log"
@@ -31,6 +34,7 @@ type Storager interface {
 
 type OpenAIClient interface {
 	CheckExercise(s db.Submission) (ai.ExerciseFeedback, error)
+	GenerateAudio(text string) (io.ReadCloser, error)
 }
 
 type handler struct {
@@ -160,6 +164,39 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 				msg.Text = fmt.Sprintf("Задание:\n\nОтветь на вопрос: %s", exercise.Question)
 			case db.ExerciseTypeTranslation:
 				msg.Text = fmt.Sprintf("Задание:\n\nПереведи: %s", exercise.Question)
+			case db.ExerciseTypeAudio:
+				msg.Text = fmt.Sprintf("Задание:\n\nПрослушай аудио и ответь на вопрос: %s", exercise.Question)
+
+				audioReader, err := h.openaiClient.GenerateAudio(exercise.AudioText)
+				if err != nil {
+					log.Printf("Failed to generate audio: %v", err)
+					msg.Text = "Ошибка при генерации аудио. Попробуй позже."
+					return
+				}
+				defer audioReader.Close()
+
+				// Считываем всё содержимое в память (аналогично os.ReadFile в примере)
+				audioData, err := io.ReadAll(audioReader)
+				if err != nil {
+					log.Printf("Failed to read audio data: %v", err)
+					msg.Text = "Ошибка при обработке аудио. Попробуй позже."
+					return
+				}
+
+				params := &telegram.SendVoiceParams{
+					ChatID: chatID,
+					Voice: &models.InputFileUpload{
+						Filename: "voice.ogg",                // Telegram требует имя
+						Data:     bytes.NewReader(audioData), // Аналогично примеру с фото
+					},
+					Caption: "Прослушай и ответь на вопрос",
+				}
+
+				if _, err := h.bot.SendVoice(context.Background(), params); err != nil {
+					log.Printf("Failed to send audio: %v", err)
+					msg.Text = "Ошибка при отправке аудио. Попробуй позже."
+					return
+				}
 			}
 			if err := h.db.MarkExerciseSent(chatID, exercise.ID); err != nil {
 				log.Printf("Failed to mark exercise as sent: %v", err)

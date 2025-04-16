@@ -16,17 +16,23 @@ import (
 )
 
 type Client struct {
-	client *openai.Client
+	grokClient   *openai.Client
+	openaiClient *openai.Client
 }
 
-func NewClient(apiKey string) *Client {
+func NewClient(grokApiKey, openAIApiKey string) *Client {
 	client := openai.NewClient(
-		option.WithAPIKey(apiKey),
+		option.WithAPIKey(grokApiKey),
 		option.WithBaseURL("https://api.x.ai/v1"),
 	)
 
+	openAIClient := openai.NewClient(
+		option.WithAPIKey(openAIApiKey),
+	)
+
 	return &Client{
-		client: &client,
+		grokClient:   &client,
+		openaiClient: &openAIClient,
 	}
 }
 
@@ -72,9 +78,18 @@ func (c *Client) CheckExercise(submission db.Submission) (ExerciseFeedback, erro
 			submission.Exercise.Question,
 			submission.UserInput,
 		)
+	case db.ExerciseTypeAudio:
+		systemPrompt = "Ты преподаватель японского языка. Проверь правильно ли ответили на вопрос по тексту. Ответь кратко в формате JSON: оценка (0-100), комментарий (ошибки или пояснение), улучшенный вариант."
+		userPrompt = fmt.Sprintf(`Текст: "%s"
+Вопрос: "%s"
+Ответ: 「%s」`,
+			submission.Exercise.AudioText,
+			submission.Exercise.Question,
+			submission.UserInput,
+		)
 	}
 
-	resp, err := c.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+	resp, err := c.grokClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
 		Model: "grok-3-fast-beta",
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.SystemMessage(systemPrompt),
@@ -116,6 +131,13 @@ type QuestionTask struct {
 	Explanation string `json:"explanation" jsonschema_description:"Подсказка по грамматике, словам или контексту"`
 }
 
+type AudioTask struct {
+	Text        string `json:"text" jsonschema_description:"Короткий текст на японском языке (1-3 предложения)"`
+	Question    string `json:"question" jsonschema_description:"Вопрос по содержанию текста на японском языке"`
+	Answer      string `json:"answer" jsonschema_description:"Правильный ответ на вопрос"`
+	Explanation string `json:"explanation" jsonschema_description:"Подсказка по грамматике, словам или контексту"`
+}
+
 type QuestionTaskList struct {
 	Tasks []QuestionTask `json:"tasks" jsonschema_description:"Список сгенерированных заданий"`
 }
@@ -129,6 +151,14 @@ type TranslationTaskList struct {
 }
 
 func (t TranslationTaskList) GetTasks() []TranslationTask {
+	return t.Tasks
+}
+
+type AudioTaskList struct {
+	Tasks []AudioTask `json:"tasks" jsonschema_description:"Список сгенерированных заданий"`
+}
+
+func (t AudioTaskList) GetTasks() []AudioTask {
 	return t.Tasks
 }
 
@@ -182,7 +212,20 @@ func (c *Client) CreateBatchTask(levels []string, types []string, existing map[s
 %s
 `, tasksPerLevel, level, existingList)
 				schema = GenerateSchema[QuestionTaskList]()
-
+			case db.ExerciseTypeAudio:
+				systemPrompt = "Ты преподаватель японского языка. Сгенерируй аудиозадания для практики аудирования. Каждое задание включает короткий текст на японском языке (для аудио), вопрос по содержанию текста, правильный ответ и объяснение."
+				userPrompt = fmt.Sprintf(`Сгенерируй %d уникальных аудиозаданий уровня %s. Укажи:
+- Короткий текст на японском (1-3 предложения, подходящие для аудирования).
+- Вопрос по содержанию текста на японском.
+- Правильный ответ на вопрос.
+- Краткий разбор, включающий:
+  - Значение каждого ключевого слова или фразы (с ромадзи для чтения).
+  - Грамматические конструкции (например, частицы, формы глаголов).
+  - Роль каждого элемента в предложении.
+Не используй задания ниже:
+%s
+`, tasksPerLevel, level, existingList)
+				schema = GenerateSchema[AudioTaskList]()
 			default:
 				log.Printf("Unknown exercise type: %s", exType)
 				continue
@@ -191,7 +234,7 @@ func (c *Client) CreateBatchTask(levels []string, types []string, existing map[s
 			log.Printf("Sending request for %s-%s", exType, level)
 
 			// Make a synchronous API call instead of creating a batch
-			resp, err := c.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+			resp, err := c.grokClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
 				Model: "grok-3-beta",
 				Messages: []openai.ChatCompletionMessageParamUnion{
 					openai.SystemMessage(systemPrompt),
@@ -234,7 +277,12 @@ func (c *Client) CreateBatchTask(levels []string, types []string, existing map[s
 					return nil, fmt.Errorf("failed to parse question task list for %s-%s: %w", exType, level, err)
 				}
 				result.GeneratedTaskList = taskList
-
+			case db.ExerciseTypeAudio:
+				var taskList AudioTaskList
+				if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &taskList); err != nil {
+					return nil, fmt.Errorf("failed to parse audio task list for %s-%s: %w", exType, level, err)
+				}
+				result.GeneratedTaskList = taskList
 			default:
 				log.Printf("Unknown exercise type in response: %s", exType)
 				continue
@@ -246,6 +294,20 @@ func (c *Client) CreateBatchTask(levels []string, types []string, existing map[s
 	}
 
 	return results, nil
+}
+
+func (c *Client) GenerateAudio(text string) (io.ReadCloser, error) {
+	resp, err := c.openaiClient.Audio.Speech.New(context.TODO(), openai.AudioSpeechNewParams{
+		Input:          text,
+		Model:          openai.SpeechModelGPT4oMiniTTS,
+		Voice:          openai.AudioSpeechNewParamsVoiceFable,
+		ResponseFormat: openai.AudioSpeechNewParamsResponseFormatOpus,
+		Speed:          openai.Float(0.75),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate audio: %w", err)
+	}
+	return resp.Body, nil
 }
 
 func getLevelAndTypeFromCustomID(customID string) (string, string) {
@@ -275,7 +337,7 @@ func (c *Client) GetBatchResults(batchID string) ([]BatchResult, bool, error) {
 
 	var results []BatchResult
 
-	batch, err := c.client.Batches.Get(ctx, batchID)
+	batch, err := c.grokClient.Batches.Get(ctx, batchID)
 	if err != nil {
 		return results, false, fmt.Errorf("failed to retrieve batch: %w", err)
 	}
@@ -289,7 +351,7 @@ func (c *Client) GetBatchResults(batchID string) ([]BatchResult, bool, error) {
 		return results, false, fmt.Errorf("no output file available")
 	}
 
-	resp, err := c.client.Files.Content(ctx, batch.OutputFileID)
+	resp, err := c.grokClient.Files.Content(ctx, batch.OutputFileID)
 	if err != nil {
 		return results, false, fmt.Errorf("failed to get file content: %w", err)
 	}

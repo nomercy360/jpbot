@@ -28,6 +28,8 @@ type Exercise struct {
 	Topic         string    `db:"topic" json:"topic"`
 	Type          string    `db:"type" json:"type"`
 	Explanation   string    `db:"explanation" json:"explanation"`
+	AudioURL      string    `db:"audio_url" json:"audio_url"`
+	AudioText     string    `db:"audio_text" json:"audio_text"`
 	CreatedAt     time.Time `db:"created_at" json:"created_at"`
 }
 
@@ -161,6 +163,8 @@ func ConnectDB(dbPath string) (*storage, error) {
 			correct_answer TEXT,
 			topic TEXT,
 			explanation TEXT,
+			audio_url TEXT,
+			audio_text TEXT,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	   );
 		CREATE TABLE IF NOT EXISTS user_submissions (
@@ -196,6 +200,7 @@ func NewStorage(db *sql.DB) *storage {
 var (
 	ExerciseTypeTranslation = "translation"
 	ExerciseTypeQuestion    = "question"
+	ExerciseTypeAudio       = "audio"
 )
 
 func (s *storage) Health() (HealthStats, error) {
@@ -263,7 +268,9 @@ func (s *storage) GetSubmissionByID(ctx context.Context, id int64) (Submission, 
 					'correct_answer', e.correct_answer,
 					'topic', e.topic,
 				    'type', e.type,
-					'explanation', e.explanation
+					'explanation', e.explanation,
+					'audio_url', e.audio_url,
+					'audio_text', e.audio_text
 				) AS exercise
 				FROM user_submissions us
 				JOIN exercises e ON us.exercise_id = e.id
@@ -305,8 +312,8 @@ func (s *storage) SaveTasksBatch(tasks []Exercise) error {
 		return err
 	}
 	stmt, err := tx.Prepare(`
-		INSERT INTO exercises (level, question, correct_answer, topic, explanation, type)
-		VALUES (?, ?, ?, '', ?, ?)
+		INSERT INTO exercises (level, question, correct_answer, topic, explanation, audio_url, audio_text, type)
+		VALUES (?, ?, ?, '', ?, ?, ?, ?)
 	`)
 
 	if err != nil {
@@ -321,6 +328,8 @@ func (s *storage) SaveTasksBatch(tasks []Exercise) error {
 			task.Question,
 			task.CorrectAnswer,
 			task.Explanation,
+			task.AudioURL,
+			task.AudioText,
 			task.Type,
 		); err != nil {
 			tx.Rollback()
@@ -346,7 +355,7 @@ func (s *storage) GetUser(telegramID int64) (*User, error) {
 //GetExercisesByLevel
 
 func (s *storage) GetExercisesByLevel(level string) ([]Exercise, error) {
-	query := `SELECT id, level, question, correct_answer, topic, explanation, type, created_at FROM exercises WHERE level = ?`
+	query := `SELECT id, level, question, correct_answer, topic, explanation, type, audio_url, audio_text, created_at FROM exercises WHERE level = ?`
 	rows, err := s.db.Query(query, level)
 	if err != nil {
 		return nil, fmt.Errorf("error querying exercises: %w", err)
@@ -356,7 +365,17 @@ func (s *storage) GetExercisesByLevel(level string) ([]Exercise, error) {
 	var exercises []Exercise
 	for rows.Next() {
 		var exercise Exercise
-		if err := rows.Scan(&exercise.ID, &exercise.Level, &exercise.Question, &exercise.CorrectAnswer, &exercise.Topic, &exercise.Explanation, &exercise.Type, &exercise.CreatedAt); err != nil {
+		if err := rows.Scan(
+			&exercise.ID,
+			&exercise.Level,
+			&exercise.Question,
+			&exercise.CorrectAnswer,
+			&exercise.Topic,
+			&exercise.Explanation,
+			&exercise.Type,
+			&exercise.CreatedAt,
+			&exercise.AudioURL,
+		); err != nil {
 			return nil, fmt.Errorf("error scanning exercise: %w", err)
 		}
 		exercises = append(exercises, exercise)
@@ -370,7 +389,7 @@ func (s *storage) GetExercisesByLevel(level string) ([]Exercise, error) {
 }
 
 func (s *storage) GetExercisesByLevelAndType(level, exType string) ([]Exercise, error) {
-	query := `SELECT id, level, question, correct_answer, topic, explanation, type, created_at FROM exercises WHERE level = ? AND type = ?`
+	query := `SELECT id, level, question, correct_answer, topic, explanation, type, audio_url, audio_text, created_at FROM exercises WHERE level = ? AND type = ?`
 	rows, err := s.db.Query(query, level, exType)
 	if err != nil {
 		return nil, fmt.Errorf("error querying exercises: %w", err)
@@ -380,7 +399,18 @@ func (s *storage) GetExercisesByLevelAndType(level, exType string) ([]Exercise, 
 	var exercises []Exercise
 	for rows.Next() {
 		var exercise Exercise
-		if err := rows.Scan(&exercise.ID, &exercise.Level, &exercise.Question, &exercise.CorrectAnswer, &exercise.Topic, &exercise.Explanation, &exercise.Type, &exercise.CreatedAt); err != nil {
+		if err := rows.Scan(
+			&exercise.ID,
+			&exercise.Level,
+			&exercise.Question,
+			&exercise.CorrectAnswer,
+			&exercise.Topic,
+			&exercise.Explanation,
+			&exercise.Type,
+			&exercise.AudioURL,
+			&exercise.AudioText,
+			&exercise.CreatedAt,
+		); err != nil {
 			return nil, fmt.Errorf("error scanning exercise: %w", err)
 		}
 		exercises = append(exercises, exercise)
@@ -395,7 +425,7 @@ func (s *storage) GetExercisesByLevelAndType(level, exType string) ([]Exercise, 
 
 func (s *storage) GetNextExerciseForUser(userID int64, level string) (Exercise, error) {
 	query := `
-		SELECT e.id, e.level, e.question, e.correct_answer, e.topic, e.explanation, e.type, e.created_at
+		SELECT e.id, e.level, e.question, e.correct_answer, e.topic, e.explanation, e.type, e.audio_url, e.audio_text, e.created_at
 		FROM exercises e
 		LEFT JOIN user_submissions ue ON e.id = ue.exercise_id AND ue.user_id = ?
 		WHERE e.level = ? AND ue.exercise_id IS NULL
@@ -405,8 +435,16 @@ func (s *storage) GetNextExerciseForUser(userID int64, level string) (Exercise, 
 	exercise := Exercise{}
 
 	err := s.db.QueryRow(query, userID, level).Scan(
-		&exercise.ID, &exercise.Level, &exercise.Question, &exercise.CorrectAnswer,
-		&exercise.Topic, &exercise.Explanation, &exercise.Type, &exercise.CreatedAt,
+		&exercise.ID,
+		&exercise.Level,
+		&exercise.Question,
+		&exercise.CorrectAnswer,
+		&exercise.Topic,
+		&exercise.Explanation,
+		&exercise.Type,
+		&exercise.AudioURL,
+		&exercise.AudioText,
+		&exercise.CreatedAt,
 	)
 
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
@@ -476,10 +514,18 @@ func (s *storage) SaveUser(user *User) error {
 func (s *storage) GetExerciseByID(exerciseID int64) (Exercise, error) {
 	exercise := Exercise{}
 
-	query := `SELECT id, level, question, correct_answer, topic, explanation, type, created_at FROM exercises WHERE id = ?`
+	query := `SELECT id, level, question, correct_answer, topic, explanation, type, audio_url, audio_text,  created_at FROM exercises WHERE id = ?`
 	err := s.db.QueryRow(query, exerciseID).Scan(
-		&exercise.ID, &exercise.Level, &exercise.Question, &exercise.CorrectAnswer,
-		&exercise.Topic, &exercise.Explanation, &exercise.Type, &exercise.CreatedAt,
+		&exercise.ID,
+		&exercise.Level,
+		&exercise.Question,
+		&exercise.CorrectAnswer,
+		&exercise.Topic,
+		&exercise.Explanation,
+		&exercise.Type,
+		&exercise.AudioURL,
+		&exercise.AudioText,
+		&exercise.CreatedAt,
 	)
 
 	if err != nil && errors.Is(err, sql.ErrNoRows) {

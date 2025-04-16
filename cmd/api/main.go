@@ -22,7 +22,8 @@ type Config struct {
 	Port             int    `yaml:"port"`
 	DBPath           string `yaml:"db_path"`
 	TelegramBotToken string `yaml:"telegram_bot_token"`
-	OpenAIKey        string `yaml:"openai_key"`
+	OpenAIAPIKey     string `yaml:"openai_api_key"`
+	GrokAPIKey       string `yaml:"grok_api_key"`
 	ExternalURL      string `yaml:"external_url"`
 }
 
@@ -68,7 +69,7 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	openaiClient := ai.NewClient(cfg.OpenAIKey)
+	openaiClient := ai.NewClient(cfg.GrokAPIKey, cfg.OpenAIAPIKey)
 
 	bot, err := telegram.New(cfg.TelegramBotToken)
 	if err != nil {
@@ -84,11 +85,12 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
+	//e.Use(middleware.Recover())
 
 	webhookURL := fmt.Sprintf("%s/webhook", cfg.ExternalURL)
 	if ok, err := bot.SetWebhook(context.Background(), &telegram.SetWebhookParams{
-		URL: webhookURL,
+		DropPendingUpdates: true,
+		URL:                webhookURL,
 	}); err != nil {
 		log.Fatalf("Failed to set webhook: %v", err)
 	} else if !ok {
