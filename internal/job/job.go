@@ -23,7 +23,7 @@ type Storager interface {
 
 type OpenAIClient interface {
 	// CreateBatchTask(levels, types []string, existing map[string][]string, tasksPerLevel int) (*ai.BatchTask, error)
-	CreateBatchTask(levels []string, types []string, existing map[string][]string, tasksPerLevel int) ([]ai.BatchResult, error)
+	CreateBatchTask(level string, types []string, existing map[string][]string, tasksPerLevel int) ([]ai.BatchResult, error)
 	GetBatchResults(batchID string) ([]ai.BatchResult, bool, error)
 }
 
@@ -39,6 +39,21 @@ func NewJob(db Storager, openaiClient *ai.Client, bot *telegram.Bot) *job {
 		db:           db,
 		openaiClient: openaiClient,
 	}
+}
+
+func withRetry[T any](attempts int, delay time.Duration, fn func() (T, error)) (T, error) {
+	var lastErr error
+	var zero T
+	for i := 0; i < attempts; i++ {
+		result, err := fn()
+		if err == nil {
+			return result, nil
+		}
+		lastErr = err
+		log.Printf("Attempt %d failed: %v. Retrying in %s...", i+1, err, delay)
+		time.Sleep(delay)
+	}
+	return zero, fmt.Errorf("all %d retry attempts failed: %w", attempts, lastErr)
 }
 
 func (j *job) generateTasks() error {
@@ -60,100 +75,93 @@ func (j *job) generateTasks() error {
 		}
 	}
 
-	log.Printf("Starting task generation for levels: %v and types: %v", levels, types)
+	for _, level := range levels {
+		log.Printf("Starting task generation for level: %s, types: %v", level, types)
 
-	res, err := j.openaiClient.CreateBatchTask(levels, types, existing, 10)
-	if err != nil {
-		log.Fatalf("Failed to generate tasks: %v", err)
-	}
+		batch, err := withRetry(3, 5*time.Second, func() ([]ai.BatchResult, error) {
+			return j.openaiClient.CreateBatchTask(level, types, existing, 5)
+		})
 
-	var exercises []db.Exercise
-	for _, res := range res {
-		switch res.Type {
-		case db.ExerciseTypeQuestion:
-			taskList, ok := res.GeneratedTaskList.(ai.QuestionTaskList)
-			if !ok {
-				log.Printf("Failed to convert task list to QuestionTaskList: %v", res.GeneratedTaskList)
-				continue
-			}
-			for _, task := range taskList.GetTasks() {
-				exercise := db.Exercise{
-					Level:       res.Level,
-					Type:        res.Type,
-					Question:    task.Question,
-					Explanation: task.Explanation,
+		if err != nil {
+			log.Printf("Failed to generate tasks for level %s: %v", level, err)
+			continue
+		}
+
+		var exercises []db.Exercise
+		for _, res := range batch {
+			switch res.Type {
+			case db.ExerciseTypeQuestion:
+				taskList, ok := res.GeneratedTaskList.(ai.QuestionTaskList)
+				if !ok {
+					log.Printf("Failed to convert task list to QuestionTaskList: %v", res.GeneratedTaskList)
+					continue
 				}
-				exercises = append(exercises, exercise)
-			}
-
-		case db.ExerciseTypeTranslation:
-			taskList, ok := res.GeneratedTaskList.(ai.TranslationTaskList)
-			if !ok {
-				log.Printf("Failed to convert task list to TranslationTaskList: %v", res.GeneratedTaskList)
-				continue
-			}
-			for _, task := range taskList.GetTasks() {
-				exercise := db.Exercise{
-					Level:         res.Level,
-					Type:          res.Type,
-					Question:      task.Russian,
-					CorrectAnswer: task.Japanese,
-					Explanation:   task.Explanation,
+				for _, task := range taskList.GetTasks() {
+					exercise := db.Exercise{
+						Level:       res.Level,
+						Type:        res.Type,
+						Question:    task.Question,
+						Explanation: task.Explanation,
+					}
+					exercises = append(exercises, exercise)
 				}
-				exercises = append(exercises, exercise)
-			}
-		case db.ExerciseTypeAudio:
-			taskList, ok := res.GeneratedTaskList.(ai.AudioTaskList)
-			if !ok {
-				log.Printf("Failed to convert task list to AudioTaskList: %v", res.GeneratedTaskList)
-				continue
-			}
 
-			for _, task := range taskList.GetTasks() {
-				exercise := db.Exercise{
-					Level:         res.Level,
-					Type:          res.Type,
-					Question:      task.Question,
-					CorrectAnswer: task.Answer,
-					AudioText:     task.Text,
-					Explanation:   task.Explanation,
+			case db.ExerciseTypeTranslation:
+				taskList, ok := res.GeneratedTaskList.(ai.TranslationTaskList)
+				if !ok {
+					log.Printf("Failed to convert task list to TranslationTaskList: %v", res.GeneratedTaskList)
+					continue
 				}
-				exercises = append(exercises, exercise)
-			}
-		case db.ExerciseTypeGrammar:
-			taskList, ok := res.GeneratedTaskList.(ai.GrammarTaskList)
-			if !ok {
-				log.Printf("Failed to convert task list to GrammarTaskList: %v", res.GeneratedTaskList)
-				continue
-			}
+				for _, task := range taskList.GetTasks() {
+					exercise := db.Exercise{
+						Level:         res.Level,
+						Type:          res.Type,
+						Question:      task.Russian,
+						CorrectAnswer: task.Japanese,
+						Explanation:   task.Explanation,
+					}
+					exercises = append(exercises, exercise)
+				}
+			case db.ExerciseTypeAudio:
+				taskList, ok := res.GeneratedTaskList.(ai.AudioTaskList)
+				if !ok {
+					log.Printf("Failed to convert task list to AudioTaskList: %v", res.GeneratedTaskList)
+					continue
+				}
 
-			for _, task := range taskList.GetTasks() {
-				exercise := db.Exercise{
-					Level:    res.Level,
-					Type:     res.Type,
-					Question: task.Question,
+				for _, task := range taskList.GetTasks() {
+					exercise := db.Exercise{
+						Level:         res.Level,
+						Type:          res.Type,
+						Question:      task.Question,
+						CorrectAnswer: task.Answer,
+						AudioText:     task.Text,
+						Explanation:   task.Explanation,
+					}
+					exercises = append(exercises, exercise)
 				}
-				exercises = append(exercises, exercise)
+			case db.ExerciseTypeGrammar:
+				taskList, ok := res.GeneratedTaskList.(ai.GrammarTaskList)
+				if !ok {
+					log.Printf("Failed to convert task list to GrammarTaskList: %v", res.GeneratedTaskList)
+					continue
+				}
+
+				for _, task := range taskList.GetTasks() {
+					exercise := db.Exercise{
+						Level:    res.Level,
+						Type:     res.Type,
+						Question: task.Question,
+					}
+					exercises = append(exercises, exercise)
+				}
 			}
 		}
-	}
 
-	if err := j.db.SaveTasksBatch(exercises); err != nil {
-		log.Printf("Failed to save tasks from batch: %v", err)
-		//continue
+		if err := j.db.SaveTasksBatch(exercises); err != nil {
+			log.Printf("Failed to save tasks from batch: %v", err)
+		}
 	}
-	//
-	//if err := j.db.UpdateBatchStatus(id, "completed"); err != nil {
-	//	log.Printf("Failed to update batch status: %v", err)
-	//}
-	//
-	//
-	//log.Printf("Generated task with ID: %s", batch.ID)
-	//
-	//if err := j.db.SaveBatchMeta(batch.ID, "in_progress"); err != nil {
-	//	log.Printf("Failed to save batch meta: %v", err)
-	//}
-
 	return nil
 }
 
@@ -234,7 +242,7 @@ func (j *job) Run(ctx context.Context) {
 
 	for {
 		now := time.Now().In(location)
-		nextRun := time.Date(now.Year(), now.Month(), now.Day(), 18, 55, 0, 0, location)
+		nextRun := time.Date(now.Year(), now.Month(), now.Day(), 19, 15, 0, 0, location)
 
 		if now.After(nextRun) {
 			nextRun = nextRun.Add(24 * time.Hour)

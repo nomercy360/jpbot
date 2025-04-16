@@ -190,26 +190,25 @@ type BatchTask struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
-func (c *Client) CreateBatchTask(levels []string, types []string, existing map[string][]string, tasksPerLevel int) ([]BatchResult, error) {
+func (c *Client) CreateBatchTask(level string, types []string, existing map[string][]string, tasksPerLevel int) ([]BatchResult, error) {
 	ctx := context.Background()
 	var results []BatchResult
 	requestCount := 0
 
-	for _, level := range levels {
-		for _, exType := range types {
-			key := fmt.Sprintf("%s|%s", exType, level)
-			existingList := ""
-			for _, e := range existing[key] {
-				existingList += fmt.Sprintf("- %s\n", e)
-			}
+	for _, exType := range types {
+		key := fmt.Sprintf("%s|%s", exType, level)
+		existingList := ""
+		for _, e := range existing[key] {
+			existingList += fmt.Sprintf("- %s\n", e)
+		}
 
-			var systemPrompt, userPrompt string
-			var schema any
+		var systemPrompt, userPrompt string
+		var schema any
 
-			switch exType {
-			case db.ExerciseTypeTranslation:
-				systemPrompt = "Ты преподаватель японского языка. Твоя задача — создать простые и полезные упражнения на перевод с русского на японский язык. Каждое упражнение должно содержать грамматическую подсказку и ключевое слово с объяснением."
-				userPrompt = fmt.Sprintf(`Сгенерируй %d уникальных предложений уровня %s. Укажи:
+		switch exType {
+		case db.ExerciseTypeTranslation:
+			systemPrompt = "Ты преподаватель японского языка. Твоя задача — создать простые и полезные упражнения на перевод с русского на японский язык. Каждое упражнение должно содержать грамматическую подсказку и ключевое слово с объяснением."
+			userPrompt = fmt.Sprintf(`Сгенерируй %d уникальных предложений уровня %s. Укажи:
 - Оригинал на русском
 - Перевод на японский
 - Краткий разбор предложения, включающий:
@@ -219,11 +218,11 @@ func (c *Client) CreateBatchTask(levels []string, types []string, existing map[s
 Не используй предложения ниже:
 %s
 `, tasksPerLevel, level, existingList)
-				schema = GenerateSchema[TranslationTaskList]()
+			schema = GenerateSchema[TranslationTaskList]()
 
-			case db.ExerciseTypeQuestion:
-				systemPrompt = "Ты преподаватель японского. Сгенерируй короткие вопросы, на которые можно ответить на японском языке. Они должны быть интересны и полезны для практики."
-				userPrompt = fmt.Sprintf(`Сгенерируй %d уникальных вопросов на японском языке уровня %s. Вопросы могут быть о пользователе, повседневной жизни, культуре или языке. Укажи:
+		case db.ExerciseTypeQuestion:
+			systemPrompt = "Ты преподаватель японского. Сгенерируй короткие вопросы, на которые можно ответить на японском языке. Они должны быть интересны и полезны для практики."
+			userPrompt = fmt.Sprintf(`Сгенерируй %d уникальных вопросов на японском языке уровня %s. Вопросы могут быть о пользователе, повседневной жизни, культуре или языке. Укажи:
 - Вопрос на японском
 - Краткий разбор вопроса, включающий:
   - Значение каждого ключевого слова или фразы (с ромадзи для чтения).
@@ -232,10 +231,10 @@ func (c *Client) CreateBatchTask(levels []string, types []string, existing map[s
 Не используй вопросы ниже:
 %s
 `, tasksPerLevel, level, existingList)
-				schema = GenerateSchema[QuestionTaskList]()
-			case db.ExerciseTypeAudio:
-				systemPrompt = "Ты преподаватель японского языка. Сгенерируй аудиозадания для практики аудирования. Каждое задание включает короткий текст на японском языке (для аудио), вопрос по содержанию текста, правильный ответ и объяснение."
-				userPrompt = fmt.Sprintf(`Сгенерируй %d уникальных аудиозаданий уровня %s. Укажи:
+			schema = GenerateSchema[QuestionTaskList]()
+		case db.ExerciseTypeAudio:
+			systemPrompt = "Ты преподаватель японского языка. Сгенерируй аудиозадания для практики аудирования. Каждое задание включает короткий текст на японском языке (для аудио), вопрос по содержанию текста, правильный ответ и объяснение."
+			userPrompt = fmt.Sprintf(`Сгенерируй %d уникальных аудиозаданий уровня %s. Укажи:
 - Короткий текст на японском (1-3 предложения, подходящие для аудирования).
 - Вопрос по содержанию текста на японском.
 - Правильный ответ на вопрос.
@@ -246,86 +245,85 @@ func (c *Client) CreateBatchTask(levels []string, types []string, existing map[s
 Не используй задания ниже:
 %s
 `, tasksPerLevel, level, existingList)
-				schema = GenerateSchema[AudioTaskList]()
-			case db.ExerciseTypeGrammar:
-				systemPrompt = "Ты преподаватель японского языка. Твоя задача — создать упражнения для практики грамматических конструкций. Каждое задание должно содержать описание грамматической конструкции"
-				userPrompt = fmt.Sprintf(`Сгенерируй %d уникальных заданий на грамматику уровня %s. Укажи:
+			schema = GenerateSchema[AudioTaskList]()
+		case db.ExerciseTypeGrammar:
+			systemPrompt = "Ты преподаватель японского языка. Твоя задача — создать упражнения для практики грамматических конструкций. Каждое задание должно содержать описание грамматической конструкции"
+			userPrompt = fmt.Sprintf(`Сгенерируй %d уникальных заданий на грамматику уровня %s. Укажи:
 - Грамматическую конструкцию (например, ～たい, ～ながら, ～てしまう) и ее использование.
 Не используй задания ниже:
 %s
 `, tasksPerLevel, level, existingList)
-				schema = GenerateSchema[GrammarTaskList]()
-			default:
-				log.Printf("Unknown exercise type: %s", exType)
-				continue
-			}
+			schema = GenerateSchema[GrammarTaskList]()
+		default:
+			log.Printf("Unknown exercise type: %s", exType)
+			continue
+		}
 
-			log.Printf("Sending request for %s-%s", exType, level)
+		log.Printf("Sending request for %s-%s", exType, level)
 
-			// Make a synchronous API call instead of creating a batch
-			resp, err := c.grokClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-				Model: "grok-3-beta",
-				Messages: []openai.ChatCompletionMessageParamUnion{
-					openai.SystemMessage(systemPrompt),
-					openai.UserMessage(userPrompt),
-				},
-				ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
-					OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{
-						JSONSchema: openai.ResponseFormatJSONSchemaJSONSchemaParam{
-							Name:        "generated_task_list",
-							Description: openai.String("Новые упражнения для перевода"),
-							Schema:      schema,
-							Strict:      openai.Bool(true),
-						},
+		// Make a synchronous API call instead of creating a batch
+		resp, err := c.grokClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+			Model: "grok-3-beta",
+			Messages: []openai.ChatCompletionMessageParamUnion{
+				openai.SystemMessage(systemPrompt),
+				openai.UserMessage(userPrompt),
+			},
+			ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
+				OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{
+					JSONSchema: openai.ResponseFormatJSONSchemaJSONSchemaParam{
+						Name:        "generated_task_list",
+						Description: openai.String("Новые упражнения для перевода"),
+						Schema:      schema,
+						Strict:      openai.Bool(true),
 					},
 				},
-			})
+			},
+		})
 
-			log.Printf("Received response for %s-%s", exType, level)
+		log.Printf("Received response for %s-%s", exType, level)
 
-			if err != nil {
-				return nil, fmt.Errorf("failed to generate tasks for %s-%s: %w", exType, level, err)
-			}
-
-			// Parse the response
-			var result BatchResult
-			result.Type = exType
-			result.Level = level
-
-			switch exType {
-			case db.ExerciseTypeTranslation:
-				var taskList TranslationTaskList
-				if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &taskList); err != nil {
-					return nil, fmt.Errorf("failed to parse translation task list for %s-%s: %w", exType, level, err)
-				}
-				result.GeneratedTaskList = taskList
-
-			case db.ExerciseTypeQuestion:
-				var taskList QuestionTaskList
-				if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &taskList); err != nil {
-					return nil, fmt.Errorf("failed to parse question task list for %s-%s: %w", exType, level, err)
-				}
-				result.GeneratedTaskList = taskList
-			case db.ExerciseTypeAudio:
-				var taskList AudioTaskList
-				if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &taskList); err != nil {
-					return nil, fmt.Errorf("failed to parse audio task list for %s-%s: %w", exType, level, err)
-				}
-				result.GeneratedTaskList = taskList
-			case db.ExerciseTypeGrammar:
-				var taskList GrammarTaskList
-				if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &taskList); err != nil {
-					return nil, fmt.Errorf("failed to parse grammar task list for %s-%s: %w", exType, level, err)
-				}
-				result.GeneratedTaskList = taskList
-			default:
-				log.Printf("Unknown exercise type in response: %s", exType)
-				continue
-			}
-
-			results = append(results, result)
-			requestCount++
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate tasks for %s-%s: %w", exType, level, err)
 		}
+
+		// Parse the response
+		var result BatchResult
+		result.Type = exType
+		result.Level = level
+
+		switch exType {
+		case db.ExerciseTypeTranslation:
+			var taskList TranslationTaskList
+			if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &taskList); err != nil {
+				return nil, fmt.Errorf("failed to parse translation task list for %s-%s: %w", exType, level, err)
+			}
+			result.GeneratedTaskList = taskList
+
+		case db.ExerciseTypeQuestion:
+			var taskList QuestionTaskList
+			if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &taskList); err != nil {
+				return nil, fmt.Errorf("failed to parse question task list for %s-%s: %w", exType, level, err)
+			}
+			result.GeneratedTaskList = taskList
+		case db.ExerciseTypeAudio:
+			var taskList AudioTaskList
+			if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &taskList); err != nil {
+				return nil, fmt.Errorf("failed to parse audio task list for %s-%s: %w", exType, level, err)
+			}
+			result.GeneratedTaskList = taskList
+		case db.ExerciseTypeGrammar:
+			var taskList GrammarTaskList
+			if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &taskList); err != nil {
+				return nil, fmt.Errorf("failed to parse grammar task list for %s-%s: %w", exType, level, err)
+			}
+			result.GeneratedTaskList = taskList
+		default:
+			log.Printf("Unknown exercise type in response: %s", exType)
+			continue
+		}
+
+		results = append(results, result)
+		requestCount++
 	}
 
 	return results, nil
