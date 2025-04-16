@@ -33,8 +33,9 @@ type job struct {
 	openaiClient OpenAIClient
 }
 
-func NewJob(db Storager, openaiClient *ai.Client) *job {
+func NewJob(db Storager, openaiClient *ai.Client, bot *telegram.Bot) *job {
 	return &job{
+		bot:          bot,
 		db:           db,
 		openaiClient: openaiClient,
 	}
@@ -233,7 +234,7 @@ func (j *job) Run(ctx context.Context) {
 
 	for {
 		now := time.Now().In(location)
-		nextRun := time.Date(now.Year(), now.Month(), now.Day(), 18, 45, 0, 0, location)
+		nextRun := time.Date(now.Year(), now.Month(), now.Day(), 18, 55, 0, 0, location)
 
 		if now.After(nextRun) {
 			nextRun = nextRun.Add(24 * time.Hour)

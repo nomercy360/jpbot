@@ -76,8 +76,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	jobber := job.NewJob(storage, openaiClient)
-	go jobber.Run()
+	jobber := job.NewJob(storage, openaiClient, bot)
+	go jobber.Run(context.Background())
 
 	handler := handlers.NewHandler(bot, storage, openaiClient)
 
