@@ -589,3 +589,44 @@ func (s *storage) UpdateBatchStatus(id string, status string) error {
 	_, err := s.db.Exec(`UPDATE openai_batches SET status = ? WHERE id = ?`, status, id)
 	return err
 }
+
+func (s *storage) GetAllUsers() ([]User, error) {
+	query := `SELECT id, telegram_id, level, points, exercises_done, current_exercise_id FROM users`
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("error querying users: %w", err)
+	}
+	defer rows.Close()
+
+	var users []User
+	for rows.Next() {
+		var user User
+		if err := rows.Scan(&user.ID, &user.TelegramID, &user.Level, &user.Points, &user.ExercisesDone, &user.CurrentExerciseID); err != nil {
+			return nil, fmt.Errorf("error scanning user: %w", err)
+		}
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %w", err)
+	}
+
+	return users, nil
+}
+
+func (s *storage) CountUnsolvedExercisesForUser(userID int64, level string) (int, error) {
+	query := `
+		SELECT COUNT(*)
+		FROM exercises e
+		LEFT JOIN user_submissions us ON e.id = us.exercise_id AND us.user_id = ?
+		WHERE e.level = ? AND us.exercise_id IS NULL
+	`
+
+	var count int
+	err := s.db.QueryRow(query, userID, level).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("error counting unsolved exercises: %w", err)
+	}
+
+	return count, nil
+}
