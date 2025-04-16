@@ -42,7 +42,7 @@ func NewJob(db Storager, openaiClient *ai.Client) *job {
 
 func (j *job) generateTasks() error {
 	levels := []string{db.LevelN3, db.LevelN4, db.LevelN5, db.LevelBeginner}
-	types := []string{db.ExerciseTypeQuestion, db.ExerciseTypeTranslation, db.ExerciseTypeAudio}
+	types := []string{db.ExerciseTypeQuestion, db.ExerciseTypeTranslation, db.ExerciseTypeAudio, db.ExerciseTypeGrammar}
 	existing := make(map[string][]string)
 
 	for _, level := range levels {
@@ -233,7 +233,7 @@ func (j *job) Run(ctx context.Context) {
 
 	for {
 		now := time.Now().In(location)
-		nextRun := time.Date(now.Year(), now.Month(), now.Day(), 06, 00, 0, 0, location)
+		nextRun := time.Date(now.Year(), now.Month(), now.Day(), 18, 45, 0, 0, location)
 
 		if now.After(nextRun) {
 			nextRun = nextRun.Add(24 * time.Hour)
