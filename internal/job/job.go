@@ -242,7 +242,7 @@ func (j *job) Run(ctx context.Context) {
 
 	for {
 		now := time.Now().In(location)
-		nextRun := time.Date(now.Year(), now.Month(), now.Day(), 19, 15, 0, 0, location)
+		nextRun := time.Date(now.Year(), now.Month(), now.Day(), 6, 0, 0, 0, location)
 
 		if now.After(nextRun) {
 			nextRun = nextRun.Add(24 * time.Hour)

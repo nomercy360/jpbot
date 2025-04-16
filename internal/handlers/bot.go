@@ -30,6 +30,7 @@ type Storager interface {
 	SaveBatchMeta(id string, status string) error
 	GetPendingBatches() ([]string, error)
 	UpdateBatchStatus(id string, status string) error
+	GetAllUsers() ([]db.User, error)
 }
 
 type OpenAIClient interface {
@@ -144,6 +145,15 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 	}
 
 	switch update.Message.Command() {
+	case "users":
+		users, err := h.db.GetAllUsers()
+		if err != nil {
+			log.Printf("Failed to get users: %v", err)
+			msg.Text = "Ошибка при получении пользователей."
+		} else {
+			count := len(users)
+			msg.Text = fmt.Sprintf("Всего пользователей: %d", count)
+		}
 	case "start":
 		msg.Text = "Привет! Используй /task для получения задания."
 	case "task":
