@@ -247,10 +247,10 @@ func (c *Client) CreateBatchTask(level string, types []string, existing map[stri
 `, tasksPerLevel, level, existingList)
 			schema = GenerateSchema[AudioTaskList]()
 		case db.ExerciseTypeGrammar:
-			systemPrompt = "Ты преподаватель японского языка. Твоя задача — создать упражнения для практики грамматических конструкций. Каждое задание должно содержать описание грамматической конструкции"
-			userPrompt = fmt.Sprintf(`Сгенерируй %d уникальных заданий на грамматику уровня %s. Укажи:
+			systemPrompt = "Ты преподаватель японского языка. Твоя задача — объяснить грамматические конструкции и их использование."
+			userPrompt = fmt.Sprintf(`Сгенерируй %d уникальных описаний грамматических конструкций уровня %s. Укажи:
 - Грамматическую конструкцию (например, ～たい, ～ながら, ～てしまう) и ее использование.
-Не используй задания ниже:
+Не используй грамматические конструкции ниже:
 %s
 `, tasksPerLevel, level, existingList)
 			schema = GenerateSchema[GrammarTaskList]()

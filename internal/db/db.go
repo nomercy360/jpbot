@@ -428,8 +428,18 @@ func (s *storage) GetNextExerciseForUser(userID int64, level string) (Exercise, 
 	query := `
 		SELECT e.id, e.level, e.question, e.correct_answer, e.topic, e.explanation, e.type, e.audio_url, e.audio_text, e.created_at
 		FROM exercises e
-		LEFT JOIN user_submissions ue ON e.id = ue.exercise_id AND ue.user_id = ?
-		WHERE e.level = ? AND ue.exercise_id IS NULL
+		LEFT JOIN (
+			SELECT exercise_id, COUNT(*) as times_shown
+			FROM user_submissions
+			WHERE user_id = ?
+			GROUP BY exercise_id
+		) ue ON e.id = ue.exercise_id
+		WHERE e.level = ?
+		AND (
+			ue.exercise_id IS NULL
+			OR (e.type = 'grammar' AND ue.times_shown < 2)
+			OR (e.type != 'grammar' AND ue.exercise_id IS NULL)
+		)
 		ORDER BY RANDOM()
 		LIMIT 1
 	`

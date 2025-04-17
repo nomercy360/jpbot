@@ -58,7 +58,7 @@ func withRetry[T any](attempts int, delay time.Duration, fn func() (T, error)) (
 
 func (j *job) generateTasks() error {
 	levels := []string{db.LevelN3, db.LevelN4, db.LevelN5, db.LevelBeginner}
-	types := []string{db.ExerciseTypeQuestion, db.ExerciseTypeTranslation, db.ExerciseTypeAudio, db.ExerciseTypeGrammar}
+	types := []string{db.ExerciseTypeGrammar}
 	existing := make(map[string][]string)
 
 	for _, level := range levels {
@@ -236,9 +236,9 @@ func (j *job) Run(ctx context.Context) {
 		log.Fatalf("Failed to load Moscow timezone: %v", err)
 	}
 
-	//if err := j.generateTasks(); err != nil {
-	//	log.Printf("Failed to generate tasks: %v", err)
-	//}
+	if err := j.generateTasks(); err != nil {
+		log.Printf("Failed to generate tasks: %v", err)
+	}
 
 	for {
 		now := time.Now().In(location)
