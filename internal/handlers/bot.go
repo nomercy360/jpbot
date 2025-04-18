@@ -156,7 +156,7 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 			msg.Text = fmt.Sprintf("Всего пользователей: %d", count)
 		}
 	case "start":
-		msg.Text = "Привет! Используй /task для перевода предложений и /vocab для перевода слов."
+		msg.Text = "Привет! Используй /task для перевода предложений и /vocab для перевода слов. \n\nИспользуй　/level, чтобы поменять сложность."
 	case "task", "vocab":
 		if user.CurrentExerciseID != nil {
 			msg.Text = "У тебя уже есть задание. Попробуй решить его!"
@@ -177,7 +177,8 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 		} else {
 			switch exercise.Type {
 			case db.ExerciseTypeVocab:
-				msg.Text = fmt.Sprintf("Переведи слово: %s", exercise.Question)
+				msg.Text = fmt.Sprintf("Переведи слово: *%s*", telegram.EscapeMarkdown(exercise.Question))
+				msg.ParseMode = models.ParseModeMarkdown
 			case db.ExerciseTypeQuestion:
 				msg.Text = fmt.Sprintf("Задание:\n\nОтветь на вопрос: %s\n\nИспользуй /hint для подсказки", exercise.Question)
 			case db.ExerciseTypeTranslation:
@@ -235,6 +236,46 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 			break
 		}
 		msg.Text = exercise.Explanation
+	case "answer":
+		if user.CurrentExerciseID == nil {
+			msg.Text = "Сначала получи задание с помощью /task."
+			break
+		}
+		exercise, err := h.db.GetExerciseByID(*user.CurrentExerciseID)
+		if err != nil {
+			msg.Text = "Ошибка при получении задания."
+			log.Printf("Failed to get exercise: %v", err)
+			break
+		}
+
+		if exercise.Type != db.ExerciseTypeVocab {
+			msg.Text = "Эта команда доступна только для словарных заданий."
+			break
+		}
+
+		submission := db.Submission{
+			UserID:     chatID,
+			ExerciseID: exercise.ID,
+			UserInput:  "Не смог ответить. Объясни, пожалуйста.",
+			Exercise:   exercise,
+		}
+
+		feedback, err := h.openaiClient.CheckExercise(submission)
+		if err != nil {
+			msg.Text = "Ошибка при проверке ответа."
+			log.Printf("Failed to check exercise: %v", err)
+			break
+		}
+
+		submission.GPTFeedback = fmt.Sprintf("Оценка: %d, Комментарий: %s, Предложение: %s",
+			feedback.Score, feedback.Feedback, feedback.Suggestion)
+
+		if err := h.db.SaveSubmission(submission); err != nil {
+			log.Printf("Failed to save submission: %v", err)
+			msg.Text = "Ошибка при сохранении ответа."
+		}
+
+		msg.Text = fmt.Sprintf("%s\n\nПопробуй написать слово самостоятельно:", feedback.Feedback)
 	case "level":
 		msg.Text = "Выбери уровень:"
 		keyboard := tgbotapi.NewInlineKeyboardMarkup(
@@ -289,8 +330,9 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 				msg.Text = "Ошибка при получении нового слова."
 				log.Printf("Failed to get next vocab exercise: %v", err)
 			} else {
-				msg.Text = fmt.Sprintf("Правильно! 🎉\n\nКомментарий: %s\n\nСледующее слово: %s\n\n",
-					feedback.Feedback, next.Question)
+				msg.Text = fmt.Sprintf("Правильно\\! 🎉\n\nКомментарий: %s\n\nСледующее слово: *%s*\n\nЕсли не знаешь, используй /answer\\.",
+					telegram.EscapeMarkdown(feedback.Feedback), telegram.EscapeMarkdown(next.Question))
+				msg.ParseMode = models.ParseModeMarkdown
 				if err := h.db.MarkExerciseSent(chatID, next.ID); err != nil {
 					log.Printf("Failed to mark vocab exercise as sent: %v", err)
 				}
