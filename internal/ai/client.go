@@ -54,6 +54,51 @@ func GenerateSchema[T any]() interface{} {
 	return schema
 }
 
+type VocabExplanation struct {
+	Example string `json:"Пример использования"`
+}
+
+func (c *Client) ExplainVocabWord(word string, translation string) (VocabExplanation, error) {
+	ctx := context.Background()
+
+	systemPrompt := `Ты преподаватель японского языка. Объясни значение японского слова, используя русский перевод.
+Ответь кратко в формате JSON:
+- Пример использования (на японском с фуриганой для сложных слов).`
+
+	userPrompt := fmt.Sprintf(`Слово: "%s"
+Перевод: "%s"`, word, translation)
+
+	schema := GenerateSchema[VocabExplanation]()
+
+	resp, err := c.grokClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+		Model: "grok-3-fast-beta",
+		Messages: []openai.ChatCompletionMessageParamUnion{
+			openai.SystemMessage(systemPrompt),
+			openai.UserMessage(userPrompt),
+		},
+		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
+			OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{
+				JSONSchema: openai.ResponseFormatJSONSchemaJSONSchemaParam{
+					Name:        "vocab_explanation",
+					Description: openai.String("Объяснение японского слова"),
+					Schema:      schema,
+					Strict:      openai.Bool(true),
+				},
+			},
+		},
+	})
+	if err != nil {
+		return VocabExplanation{}, fmt.Errorf("GPT request failed: %w", err)
+	}
+
+	var explanation VocabExplanation
+	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &explanation); err != nil {
+		return explanation, fmt.Errorf("failed to parse GPT response: %w", err)
+	}
+
+	return explanation, nil
+}
+
 func (c *Client) CheckExercise(submission db.Submission) (ExerciseFeedback, error) {
 	ctx := context.Background()
 	schema := GenerateSchema[ExerciseFeedback]()
@@ -95,7 +140,12 @@ func (c *Client) CheckExercise(submission db.Submission) (ExerciseFeedback, erro
 			submission.UserInput,
 		)
 	case db.ExerciseTypeVocab:
-		systemPrompt = "Ты преподаватель японского языка. Проверь правильность перевода слова с русского на японский. Ответь кратко в формате JSON: оценка (0-100), комментарий (пример использования слова, какие-то особенности), улучшенный вариант (если есть ошибки).　Если нет перевода, то просто дай подсказку."
+		systemPrompt = `Ты преподаватель японского языка. Проверь правильность перевода слова с русского на японский. 
+Ответь кратко в формате JSON:
+- оценка (0–100),
+- комментарий (пример использования слова, какие-то особенности),
+- улучшенный вариант (если есть ошибки).`
+
 		userPrompt = fmt.Sprintf(`Русское слово: "%s"
 Пользовательский Перевод: 「%s」
 Правильный перевод: 「%s」`,

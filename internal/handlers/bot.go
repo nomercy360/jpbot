@@ -37,6 +37,7 @@ type Storager interface {
 type OpenAIClient interface {
 	CheckExercise(s db.Submission) (ai.ExerciseFeedback, error)
 	GenerateAudio(text string) (io.ReadCloser, error)
+	ExplainVocabWord(word string, translation string) (ai.VocabExplanation, error)
 }
 
 type handler struct {
@@ -256,26 +257,22 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 		submission := db.Submission{
 			UserID:     chatID,
 			ExerciseID: exercise.ID,
-			UserInput:  "Не смог ответить. Объясни, пожалуйста.",
-			Exercise:   exercise,
+			UserInput:  "",
 		}
 
-		feedback, err := h.openaiClient.CheckExercise(submission)
+		feedback, err := h.openaiClient.ExplainVocabWord(exercise.Question, exercise.CorrectAnswer)
 		if err != nil {
 			msg.Text = "Ошибка при проверке ответа."
 			log.Printf("Failed to check exercise: %v", err)
 			break
 		}
 
-		submission.GPTFeedback = fmt.Sprintf("Оценка: %d, Комментарий: %s, Предложение: %s",
-			feedback.Score, feedback.Feedback, feedback.Suggestion)
-
 		if err := h.db.SaveSubmission(submission); err != nil {
 			log.Printf("Failed to save submission: %v", err)
 			msg.Text = "Ошибка при сохранении ответа."
 		}
 
-		msg.Text = fmt.Sprintf("%s\n\nПопробуй написать слово самостоятельно:", feedback.Feedback)
+		msg.Text = fmt.Sprintf("%s\n\n%s\n\nПопробуй написать слово самостоятельно:", exercise.CorrectAnswer, feedback.Example)
 	case "level":
 		msg.Text = "Выбери уровень:"
 		keyboard := tgbotapi.NewInlineKeyboardMarkup(
