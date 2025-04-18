@@ -94,6 +94,15 @@ func (c *Client) CheckExercise(submission db.Submission) (ExerciseFeedback, erro
 			submission.Exercise.Question,
 			submission.UserInput,
 		)
+	case db.ExerciseTypeVocab:
+		systemPrompt = "Ты преподаватель японского языка. Проверь правильность перевода слова с русского на японский. Ответь кратко в формате JSON: оценка (0-100), комментарий (пример использования слова, какие-то особенности), улучшенный вариант (если есть ошибки)."
+		userPrompt = fmt.Sprintf(`Русское слово: "%s"
+Пользовательский Перевод: 「%s」
+Правильный перевод: 「%s」`,
+			submission.Exercise.Question,
+			submission.UserInput,
+			submission.Exercise.CorrectAnswer,
+		)
 	default:
 		return ExerciseFeedback{}, fmt.Errorf("unknown exercise type: %s", submission.Exercise.Type)
 	}
@@ -147,6 +156,11 @@ type AudioTask struct {
 	Explanation string `json:"explanation" jsonschema_description:"Подсказка по грамматике, словам или контексту"`
 }
 
+type VocabTask struct {
+	Russian  string `json:"russian" jsonschema_description:"Русское слово"`
+	Japanese string `json:"japanese" jsonschema_description:"Перевод на японском языке"`
+}
+
 type GrammarTask struct {
 	Question string `json:"question" jsonschema_description:"Грамматическая конструкция и ее использование"`
 }
@@ -180,6 +194,14 @@ type GrammarTaskList struct {
 }
 
 func (t GrammarTaskList) GetTasks() []GrammarTask {
+	return t.Tasks
+}
+
+type VocabTaskList struct {
+	Tasks []VocabTask `json:"tasks" jsonschema_description:"Список сгенерированных заданий"`
+}
+
+func (t VocabTaskList) GetTasks() []VocabTask {
 	return t.Tasks
 }
 
@@ -254,6 +276,16 @@ func (c *Client) CreateBatchTask(level string, types []string, existing map[stri
 %s
 `, tasksPerLevel, level, existingList)
 			schema = GenerateSchema[GrammarTaskList]()
+		case db.ExerciseTypeVocab:
+			systemPrompt = "Ты преподаватель японского языка. Сгенерируй задания на перевод японских слов на русский язык. Используй ежедневные популярные слова. Это может быть любая часть речи, включая существительные, глаголы и прилагательные."
+			userPrompt = fmt.Sprintf(`Сгенерируй %d уникальных заданий на перевод японских слов. Укажи:
+- Русское слово
+- Перевод на японском
+
+Не используй слова ниже:
+%s
+`, tasksPerLevel, existingList)
+			schema = GenerateSchema[VocabTaskList]()
 		default:
 			log.Printf("Unknown exercise type: %s", exType)
 			continue
@@ -315,6 +347,12 @@ func (c *Client) CreateBatchTask(level string, types []string, existing map[stri
 			var taskList GrammarTaskList
 			if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &taskList); err != nil {
 				return nil, fmt.Errorf("failed to parse grammar task list for %s-%s: %w", exType, level, err)
+			}
+			result.GeneratedTaskList = taskList
+		case db.ExerciseTypeVocab:
+			var taskList VocabTaskList
+			if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &taskList); err != nil {
+				return nil, fmt.Errorf("failed to parse vocab task list for %s-%s: %w", exType, level, err)
 			}
 			result.GeneratedTaskList = taskList
 		default:

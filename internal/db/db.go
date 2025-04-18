@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/mattn/go-sqlite3"
 	_ "github.com/mattn/go-sqlite3"
+	"strings"
 	"time"
 )
 
@@ -25,7 +26,6 @@ type Exercise struct {
 	Level         string    `db:"level" json:"level"`
 	Question      string    `db:"question" json:"question"`
 	CorrectAnswer string    `db:"correct_answer" json:"correct_answer"`
-	Topic         string    `db:"topic" json:"topic"`
 	Type          string    `db:"type" json:"type"`
 	Explanation   string    `db:"explanation" json:"explanation"`
 	AudioURL      string    `db:"audio_url" json:"audio_url"`
@@ -161,7 +161,6 @@ func ConnectDB(dbPath string) (*storage, error) {
 			type TEXT DEFAULT 'translation',
 			question TEXT,
 			correct_answer TEXT,
-			topic TEXT,
 			explanation TEXT,
 			audio_url TEXT,
 			audio_text TEXT,
@@ -202,6 +201,7 @@ var (
 	ExerciseTypeQuestion    = "question"
 	ExerciseTypeAudio       = "audio"
 	ExerciseTypeGrammar     = "grammar"
+	ExerciseTypeVocab       = "vocab"
 )
 
 func (s *storage) Health() (HealthStats, error) {
@@ -313,8 +313,8 @@ func (s *storage) SaveTasksBatch(tasks []Exercise) error {
 		return err
 	}
 	stmt, err := tx.Prepare(`
-		INSERT INTO exercises (level, question, correct_answer, topic, explanation, audio_url, audio_text, type)
-		VALUES (?, ?, ?, '', ?, ?, ?, ?)
+		INSERT INTO exercises (level, question, correct_answer, explanation, audio_url, audio_text, type)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
 	`)
 
 	if err != nil {
@@ -356,7 +356,7 @@ func (s *storage) GetUser(telegramID int64) (*User, error) {
 //GetExercisesByLevel
 
 func (s *storage) GetExercisesByLevel(level string) ([]Exercise, error) {
-	query := `SELECT id, level, question, correct_answer, topic, explanation, type, audio_url, audio_text, created_at FROM exercises WHERE level = ?`
+	query := `SELECT id, level, question, correct_answer, explanation, type, audio_url, audio_text, created_at FROM exercises WHERE level = ?`
 	rows, err := s.db.Query(query, level)
 	if err != nil {
 		return nil, fmt.Errorf("error querying exercises: %w", err)
@@ -371,7 +371,6 @@ func (s *storage) GetExercisesByLevel(level string) ([]Exercise, error) {
 			&exercise.Level,
 			&exercise.Question,
 			&exercise.CorrectAnswer,
-			&exercise.Topic,
 			&exercise.Explanation,
 			&exercise.Type,
 			&exercise.CreatedAt,
@@ -390,7 +389,7 @@ func (s *storage) GetExercisesByLevel(level string) ([]Exercise, error) {
 }
 
 func (s *storage) GetExercisesByLevelAndType(level, exType string) ([]Exercise, error) {
-	query := `SELECT id, level, question, correct_answer, topic, explanation, type, audio_url, audio_text, created_at FROM exercises WHERE level = ? AND type = ?`
+	query := `SELECT id, level, question, correct_answer, explanation, type, audio_url, audio_text, created_at FROM exercises WHERE level = ? AND type = ?`
 	rows, err := s.db.Query(query, level, exType)
 	if err != nil {
 		return nil, fmt.Errorf("error querying exercises: %w", err)
@@ -405,7 +404,6 @@ func (s *storage) GetExercisesByLevelAndType(level, exType string) ([]Exercise, 
 			&exercise.Level,
 			&exercise.Question,
 			&exercise.CorrectAnswer,
-			&exercise.Topic,
 			&exercise.Explanation,
 			&exercise.Type,
 			&exercise.AudioURL,
@@ -423,10 +421,17 @@ func (s *storage) GetExercisesByLevelAndType(level, exType string) ([]Exercise, 
 
 	return exercises, nil
 }
+func (s *storage) GetNextExerciseForUser(userID int64, level string, exTypes []string) (Exercise, error) {
+	// создаём плейсхолдеры (?, ?, ?) в зависимости от длины exTypes
+	placeholders := make([]string, len(exTypes))
+	args := []interface{}{userID, level}
+	for i, t := range exTypes {
+		placeholders[i] = "?"
+		args = append(args, t)
+	}
 
-func (s *storage) GetNextExerciseForUser(userID int64, level string) (Exercise, error) {
-	query := `
-		SELECT e.id, e.level, e.question, e.correct_answer, e.topic, e.explanation, e.type, e.audio_url, e.audio_text, e.created_at
+	query := fmt.Sprintf(`
+		SELECT e.id, e.level, e.question, e.correct_answer, e.explanation, e.type, e.audio_url, e.audio_text, e.created_at
 		FROM exercises e
 		LEFT JOIN (
 			SELECT exercise_id, COUNT(*) as times_shown
@@ -434,7 +439,7 @@ func (s *storage) GetNextExerciseForUser(userID int64, level string) (Exercise, 
 			WHERE user_id = ?
 			GROUP BY exercise_id
 		) ue ON e.id = ue.exercise_id
-		WHERE e.level = ?
+		WHERE e.level = ? AND e.type IN (%s)
 		AND (
 			ue.exercise_id IS NULL
 			OR (e.type = 'grammar' AND ue.times_shown < 2)
@@ -442,16 +447,14 @@ func (s *storage) GetNextExerciseForUser(userID int64, level string) (Exercise, 
 		)
 		ORDER BY RANDOM()
 		LIMIT 1
-	`
+	`, strings.Join(placeholders, ","))
 
 	exercise := Exercise{}
-
-	err := s.db.QueryRow(query, userID, level).Scan(
+	err := s.db.QueryRow(query, args...).Scan(
 		&exercise.ID,
 		&exercise.Level,
 		&exercise.Question,
 		&exercise.CorrectAnswer,
-		&exercise.Topic,
 		&exercise.Explanation,
 		&exercise.Type,
 		&exercise.AudioURL,
@@ -526,13 +529,12 @@ func (s *storage) SaveUser(user *User) error {
 func (s *storage) GetExerciseByID(exerciseID int64) (Exercise, error) {
 	exercise := Exercise{}
 
-	query := `SELECT id, level, question, correct_answer, topic, explanation, type, audio_url, audio_text,  created_at FROM exercises WHERE id = ?`
+	query := `SELECT id, level, question, correct_answer, explanation, type, audio_url, audio_text,  created_at FROM exercises WHERE id = ?`
 	err := s.db.QueryRow(query, exerciseID).Scan(
 		&exercise.ID,
 		&exercise.Level,
 		&exercise.Question,
 		&exercise.CorrectAnswer,
-		&exercise.Topic,
 		&exercise.Explanation,
 		&exercise.Type,
 		&exercise.AudioURL,

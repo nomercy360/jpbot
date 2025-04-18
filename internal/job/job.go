@@ -57,8 +57,8 @@ func withRetry[T any](attempts int, delay time.Duration, fn func() (T, error)) (
 }
 
 func (j *job) generateTasks() error {
-	levels := []string{db.LevelN3, db.LevelN4, db.LevelN5, db.LevelBeginner}
-	types := []string{db.ExerciseTypeGrammar}
+	levels := []string{db.LevelN5}
+	types := []string{db.ExerciseTypeVocab}
 	existing := make(map[string][]string)
 
 	for _, level := range levels {
@@ -79,7 +79,7 @@ func (j *job) generateTasks() error {
 		log.Printf("Starting task generation for level: %s, types: %v", level, types)
 
 		batch, err := withRetry(3, 5*time.Second, func() ([]ai.BatchResult, error) {
-			return j.openaiClient.CreateBatchTask(level, types, existing, 5)
+			return j.openaiClient.CreateBatchTask(level, types, existing, 10)
 		})
 
 		if err != nil {
@@ -155,7 +155,24 @@ func (j *job) generateTasks() error {
 					}
 					exercises = append(exercises, exercise)
 				}
+			case db.ExerciseTypeVocab:
+				taskList, ok := res.GeneratedTaskList.(ai.VocabTaskList)
+				if !ok {
+					log.Printf("Failed to convert task list to VocabTaskList: %v", res.GeneratedTaskList)
+					continue
+				}
+
+				for _, task := range taskList.GetTasks() {
+					exercise := db.Exercise{
+						Level:         res.Level,
+						Type:          res.Type,
+						Question:      task.Russian,
+						CorrectAnswer: task.Japanese,
+					}
+					exercises = append(exercises, exercise)
+				}
 			}
+
 		}
 
 		if err := j.db.SaveTasksBatch(exercises); err != nil {
@@ -236,8 +253,11 @@ func (j *job) Run(ctx context.Context) {
 		log.Fatalf("Failed to load Moscow timezone: %v", err)
 	}
 
-	if err := j.generateTasks(); err != nil {
-		log.Printf("Failed to generate tasks: %v", err)
+	for i := 0; i < 100; i++ {
+		if err := j.generateTasks(); err != nil {
+			log.Printf("Failed to sync batch results: %v", err)
+		}
+		time.Sleep(5 * time.Second)
 	}
 
 	for {

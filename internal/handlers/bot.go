@@ -20,7 +20,7 @@ type Storager interface {
 	GetUser(telegramID int64) (*db.User, error)
 	SaveTasksBatch(tasks []db.Exercise) error
 	GetExercisesByLevel(level string) ([]db.Exercise, error)
-	GetNextExerciseForUser(userID int64, level string) (db.Exercise, error)
+	GetNextExerciseForUser(userID int64, level string, exTypes []string) (db.Exercise, error)
 	MarkExerciseSent(userID, exerciseID int64) error
 	SaveUser(user *db.User) error
 	GetExerciseByID(exerciseID int64) (db.Exercise, error)
@@ -155,14 +155,19 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 			msg.Text = fmt.Sprintf("Всего пользователей: %d", count)
 		}
 	case "start":
-		msg.Text = "Привет! Используй /task для получения задания."
-	case "task":
+		msg.Text = "Привет! Используй /task для перевода предложений и /vocab для перевода слов."
+	case "task", "vocab":
 		if user.CurrentExerciseID != nil {
-			msg.Text = "У тебя уже есть задание. Попробуй его решить!"
+			msg.Text = "У тебя уже есть задание. Попробуй решить его!"
 			break
 		}
 
-		exercise, err := h.db.GetNextExerciseForUser(chatID, user.Level)
+		types := []string{db.ExerciseTypeQuestion, db.ExerciseTypeTranslation, db.ExerciseTypeGrammar, db.ExerciseTypeAudio}
+		if update.Message.Command() == "vocab" {
+			types = []string{db.ExerciseTypeVocab}
+		}
+
+		exercise, err := h.db.GetNextExerciseForUser(chatID, user.Level, types)
 		if err != nil && errors.Is(err, db.ErrNotFound) {
 			msg.Text = "Задания для твоего уровня закончились. Попробуй зайти завтра!"
 		} else if err != nil {
@@ -170,6 +175,8 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 			log.Printf("Failed to get next exercise: %v", err)
 		} else {
 			switch exercise.Type {
+			case db.ExerciseTypeVocab:
+				msg.Text = fmt.Sprintf("Переведи слово: %s", exercise.Question)
 			case db.ExerciseTypeQuestion:
 				msg.Text = fmt.Sprintf("Задание:\n\nОтветь на вопрос: %s\n\nИспользуй /hint для подсказки", exercise.Question)
 			case db.ExerciseTypeTranslation:
@@ -274,7 +281,20 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 
 		submission.IsCorrect = feedback.Score >= 80
 
-		if submission.IsCorrect {
+		if submission.IsCorrect && submission.Exercise.Type == db.ExerciseTypeVocab {
+			next, err := h.db.GetNextExerciseForUser(chatID, user.Level, []string{db.ExerciseTypeVocab})
+
+			if err != nil {
+				msg.Text = "Ошибка при получении нового слова."
+				log.Printf("Failed to get next vocab exercise: %v", err)
+			} else {
+				msg.Text = fmt.Sprintf("Правильно! 🎉\n\nКомментарий: %s\n\nСледующее слово: %s\n\n",
+					feedback.Feedback, next.Question)
+				if err := h.db.MarkExerciseSent(chatID, next.ID); err != nil {
+					log.Printf("Failed to mark vocab exercise as sent: %v", err)
+				}
+			}
+		} else if submission.IsCorrect {
 			msg.Text = fmt.Sprintf("Правильно! 🎉\n\nКомментарий: %s\n\nПредложение: %s\n\nЧтобы получить новое задание, используй /task.",
 				feedback.Feedback, feedback.Suggestion)
 			user.CurrentExerciseID = nil
