@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/mattn/go-sqlite3"
 	_ "github.com/mattn/go-sqlite3"
+	"os"
 	"strings"
 	"time"
 )
@@ -203,6 +204,47 @@ var (
 	ExerciseTypeGrammar     = "grammar"
 	ExerciseTypeVocab       = "vocab"
 )
+
+func (s *storage) ImportVocabFromJSON(path string) error {
+	file, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	var vocab []struct {
+		Index       int    `json:"index"`
+		Kanji       string `json:"kanji"`
+		Kana        string `json:"kana"`
+		Translation string `json:"translation"`
+	}
+
+	if err := json.Unmarshal(file, &vocab); err != nil {
+		return err
+	}
+
+	stmt, err := s.db.Prepare(`
+		INSERT INTO exercises (level, type, question, correct_answer, explanation, audio_url, audio_text)
+		VALUES (?, ?, ?, ?, '', '', '')
+	`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, v := range vocab {
+		question := v.Kanji
+		if question != "" {
+			question += "・" + v.Kana
+		} else {
+			question = v.Kana
+		}
+		if _, err := stmt.Exec("N5", "vocab", v.Translation, question); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 func (s *storage) Health() (HealthStats, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)

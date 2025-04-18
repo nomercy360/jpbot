@@ -31,6 +31,7 @@ type Storager interface {
 	GetPendingBatches() ([]string, error)
 	UpdateBatchStatus(id string, status string) error
 	GetAllUsers() ([]db.User, error)
+	ImportVocabFromJSON(path string) error
 }
 
 type OpenAIClient interface {
@@ -312,6 +313,17 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 	}
 
 	return msg
+}
+
+func (h *handler) HandleImport(c echo.Context) error {
+	path := "/app/vocab.json"
+
+	if err := h.db.ImportVocabFromJSON(path); err != nil {
+		log.Printf("Failed to save vocab list: %v", err)
+		return c.JSON(500, map[string]string{"error": "failed to save vocab list"})
+	}
+
+	return c.JSON(200, map[string]string{"status": "success"})
 }
 
 func (h *handler) HandleListTasks(c echo.Context) error {

@@ -100,6 +100,7 @@ func main() {
 	// Роуты
 	e.POST("/webhook", handler.HandleWebhook)
 	e.GET("/tasks", handler.HandleListTasks)
+	e.POST("/import", handler.HandleImport)
 
 	// Запуск сервера
 	port := "8080" // Или другой порт
