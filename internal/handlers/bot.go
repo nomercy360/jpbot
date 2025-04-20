@@ -274,10 +274,6 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 
 		msg.Text = fmt.Sprintf("%s\n\n%s\n\nПопробуй написать слово самостоятельно:", exercise.CorrectAnswer, feedback.Example)
 	case "reset":
-		if user.CurrentExerciseID != nil {
-			msg.Text = "Сначала получи задание с помощью /task."
-			break
-		}
 		if err := h.db.ClearUserExercise(chatID); err != nil {
 			log.Printf("Failed to clear user exercise: %v", err)
 		}
