@@ -109,7 +109,7 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 		}
 	}
 
-	// check if message is not a command but a callback
+	// check if a message is not a command but a callback
 	if update.CallbackQuery != nil {
 		if strings.HasPrefix(update.CallbackQuery.Data, "level:") {
 			level := strings.TrimPrefix(update.CallbackQuery.Data, "level:")
@@ -273,6 +273,15 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 		}
 
 		msg.Text = fmt.Sprintf("%s\n\n%s\n\nПопробуй написать слово самостоятельно:", exercise.CorrectAnswer, feedback.Example)
+	case "reset":
+		if user.CurrentExerciseID != nil {
+			msg.Text = "Сначала получи задание с помощью /task."
+			break
+		}
+		if err := h.db.ClearUserExercise(chatID); err != nil {
+			log.Printf("Failed to clear user exercise: %v", err)
+		}
+		msg.Text = "Текущая задача сброшена. Используй /task или /vocab для получения нового задания."
 	case "level":
 		msg.Text = "Выбери уровень:"
 		keyboard := tgbotapi.NewInlineKeyboardMarkup(
