@@ -8,42 +8,8 @@ import (
 	"fmt"
 	"github.com/mattn/go-sqlite3"
 	_ "github.com/mattn/go-sqlite3"
-	"os"
-	"strings"
 	"time"
 )
-
-type User struct {
-	ID                int64  `db:"id"`
-	TelegramID        int64  `db:"telegram_id"`
-	Level             string `db:"level"`               // уровень (например, 'beginner', 'N5', 'N4')
-	Points            int    `db:"points"`              // количество очков
-	ExercisesDone     int    `db:"exercises_done"`      // количество выполненных упражнений
-	CurrentExerciseID *int64 `db:"current_exercise_id"` // ID текущего упражнения
-}
-
-type Exercise struct {
-	ID            int64     `db:"id" json:"id"`
-	Level         string    `db:"level" json:"level"`
-	Question      string    `db:"question" json:"question"`
-	CorrectAnswer string    `db:"correct_answer" json:"correct_answer"`
-	Type          string    `db:"type" json:"type"`
-	Explanation   string    `db:"explanation" json:"explanation"`
-	AudioURL      string    `db:"audio_url" json:"audio_url"`
-	AudioText     string    `db:"audio_text" json:"audio_text"`
-	CreatedAt     time.Time `db:"created_at" json:"created_at"`
-}
-
-type Submission struct {
-	ID          int64     `db:"id"`
-	UserID      int64     `db:"user_id"`
-	ExerciseID  int64     `db:"exercise_id"`
-	UserInput   string    `db:"user_input"`
-	GPTFeedback string    `db:"gpt_feedback"`
-	IsCorrect   bool      `db:"is_correct"`
-	CreatedAt   time.Time `db:"created_at"`
-	Exercise    Exercise  `db:"exercise"`
-}
 
 type HealthStats struct {
 	Status            string `json:"status"`
@@ -59,17 +25,16 @@ type HealthStats struct {
 }
 
 const (
-	LevelBeginner = "BEGINNER"
-	LevelN5       = "N5"
-	LevelN4       = "N4"
-	LevelN3       = "N3"
-	LevelN2       = "N2"
-	LevelN1       = "N1"
+	LevelN5 = "N5"
+	LevelN4 = "N4"
+	LevelN3 = "N3"
+	LevelN2 = "N2"
+	LevelN1 = "N1"
 )
 
 func IsValidLevel(level string) bool {
 	switch level {
-	case LevelBeginner, LevelN5, LevelN4, LevelN3, LevelN2, LevelN1:
+	case LevelN5, LevelN4, LevelN3, LevelN2, LevelN1:
 		return true
 	default:
 		return false
@@ -97,6 +62,14 @@ func UnmarshalJSONToStruct[T any](src interface{}) (T, error) {
 	}
 
 	return result, nil
+}
+
+func MarshalStructToJSON[T any](src T) ([]byte, error) {
+	data, err := json.Marshal(src)
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling struct to JSON: %w", err)
+	}
+	return data, nil
 }
 
 var (
@@ -149,22 +122,19 @@ func ConnectDB(dbPath string) (*storage, error) {
 
 	schema := `
 	   CREATE TABLE IF NOT EXISTS users (
-	       id INTEGER PRIMARY KEY,
-	       telegram_id INTEGER UNIQUE,
-	       level TEXT DEFAULT 'beginner',
-	       points INTEGER DEFAULT 0,
-	       exercises_done INTEGER DEFAULT 0,
-	       current_exercise_id INTEGER
+		   id INTEGER PRIMARY KEY,
+		   telegram_id INTEGER UNIQUE,
+		   level TEXT DEFAULT 'N5',
+		   points INTEGER DEFAULT 0,
+		   exercises_done INTEGER DEFAULT 0,
+		   current_exercise_id INTEGER,
+		   current_word_id INTEGER
 	   );
 	   CREATE TABLE IF NOT EXISTS exercises (
 			id INTEGER PRIMARY KEY,
 			level TEXT,
 			type TEXT DEFAULT 'translation',
-			question TEXT,
-			correct_answer TEXT,
-			explanation TEXT,
-			audio_url TEXT,
-			audio_text TEXT,
+			content TEXT,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	   );
 		CREATE TABLE IF NOT EXISTS user_submissions (
@@ -176,10 +146,26 @@ func ConnectDB(dbPath string) (*storage, error) {
 			is_correct BOOLEAN,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		);
-		CREATE TABLE IF NOT EXISTS openai_batches (
-			id TEXT PRIMARY KEY,
-			status TEXT,
+		CREATE TABLE IF NOT EXISTS words (
+			id INTEGER PRIMARY KEY,
+			kanji TEXT,
+			kana TEXT NOT NULL,
+			translation TEXT NOT NULL,
+			examples_json TEXT,
+			level TEXT,
+			audio_url TEXT,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		);		
+		CREATE TABLE IF NOT EXISTS word_reviews (
+    		id INTEGER PRIMARY KEY,
+			word_id INTEGER NOT NULL,
+			user_id INTEGER NOT NULL,
+			next_review TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			repetition INTEGER DEFAULT 0,
+			last_reviewed TIMESTAMP,
+			FOREIGN KEY (word_id) REFERENCES words(id),
+			FOREIGN KEY (user_id) REFERENCES users(id),
+			UNIQUE (word_id, user_id)
 		);
 		`
 
@@ -202,49 +188,7 @@ var (
 	ExerciseTypeQuestion    = "question"
 	ExerciseTypeAudio       = "audio"
 	ExerciseTypeGrammar     = "grammar"
-	ExerciseTypeVocab       = "vocab"
 )
-
-func (s *storage) ImportVocabFromJSON(path string) error {
-	file, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	var vocab []struct {
-		Index       int    `json:"index"`
-		Kanji       string `json:"kanji"`
-		Kana        string `json:"kana"`
-		Translation string `json:"translation"`
-	}
-
-	if err := json.Unmarshal(file, &vocab); err != nil {
-		return err
-	}
-
-	stmt, err := s.db.Prepare(`
-		INSERT INTO exercises (level, type, question, correct_answer, explanation, audio_url, audio_text)
-		VALUES (?, ?, ?, ?, '', '', '')
-	`)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	for _, v := range vocab {
-		question := v.Kanji
-		if question != "" {
-			question += "・" + v.Kana
-		} else {
-			question = v.Kana
-		}
-		if _, err := stmt.Exec("N5", "vocab", v.Translation, question); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
 
 func (s *storage) Health() (HealthStats, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
@@ -299,388 +243,4 @@ func (s *storage) Close() error {
 		return s.db.Close()
 	}
 	return nil
-}
-
-func (s *storage) GetSubmissionByID(ctx context.Context, id int64) (Submission, error) {
-	var submission Submission
-	query := `SELECT us.id, us.user_id, us.exercise_id, us.user_input, us.gpt_feedback, us.is_correct, us.created_at,
-				json_object(
-					'id', e.id,
-					'level', e.level,
-					'question', e.question,
-					'correct_answer', e.correct_answer,
-					'topic', e.topic,
-				    'type', e.type,
-					'explanation', e.explanation,
-					'audio_url', e.audio_url,
-					'audio_text', e.audio_text
-				) AS exercise
-				FROM user_submissions us
-				JOIN exercises e ON us.exercise_id = e.id
-				WHERE us.id = ?`
-
-	var exerciseJSON interface{}
-
-	err := s.db.QueryRowContext(ctx, query, id).Scan(
-		&submission.ID,
-		&submission.UserID,
-		&submission.ExerciseID,
-		&submission.UserInput,
-		&submission.GPTFeedback,
-		&submission.IsCorrect,
-		&submission.CreatedAt,
-		&exerciseJSON,
-	)
-
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return Submission{}, ErrNotFound
-		}
-		return Submission{}, fmt.Errorf("error getting submission: %w", err)
-	}
-
-	exercise, err := UnmarshalJSONToStruct[Exercise](exerciseJSON)
-	if err != nil {
-		return Submission{}, fmt.Errorf("error unmarshalling exercise JSON: %w", err)
-	}
-
-	submission.Exercise = exercise
-
-	return submission, nil
-}
-
-func (s *storage) SaveTasksBatch(tasks []Exercise) error {
-	tx, err := s.db.Begin()
-	if err != nil {
-		return err
-	}
-	stmt, err := tx.Prepare(`
-		INSERT INTO exercises (level, question, correct_answer, explanation, audio_url, audio_text, type)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
-	`)
-
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	for _, task := range tasks {
-		if _, err := stmt.Exec(
-			task.Level,
-			task.Question,
-			task.CorrectAnswer,
-			task.Explanation,
-			task.AudioURL,
-			task.AudioText,
-			task.Type,
-		); err != nil {
-			tx.Rollback()
-			return err
-		}
-	}
-	return tx.Commit()
-}
-
-func (s *storage) GetUser(telegramID int64) (*User, error) {
-	var user User
-	query := `SELECT id, telegram_id, level, points, exercises_done, current_exercise_id FROM users WHERE telegram_id = ?`
-	err := s.db.QueryRow(query, telegramID).Scan(&user.ID, &user.TelegramID, &user.Level, &user.Points, &user.ExercisesDone, &user.CurrentExerciseID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrNotFound
-		}
-		return nil, fmt.Errorf("error getting user: %w", err)
-	}
-	return &user, nil
-}
-
-//GetExercisesByLevel
-
-func (s *storage) GetExercisesByLevel(level string) ([]Exercise, error) {
-	query := `SELECT id, level, question, correct_answer, explanation, type, audio_url, audio_text, created_at FROM exercises WHERE level = ?`
-	rows, err := s.db.Query(query, level)
-	if err != nil {
-		return nil, fmt.Errorf("error querying exercises: %w", err)
-	}
-	defer rows.Close()
-
-	var exercises []Exercise
-	for rows.Next() {
-		var exercise Exercise
-		if err := rows.Scan(
-			&exercise.ID,
-			&exercise.Level,
-			&exercise.Question,
-			&exercise.CorrectAnswer,
-			&exercise.Explanation,
-			&exercise.Type,
-			&exercise.CreatedAt,
-			&exercise.AudioURL,
-		); err != nil {
-			return nil, fmt.Errorf("error scanning exercise: %w", err)
-		}
-		exercises = append(exercises, exercise)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating over rows: %w", err)
-	}
-
-	return exercises, nil
-}
-
-func (s *storage) GetExercisesByLevelAndType(level, exType string) ([]Exercise, error) {
-	query := `SELECT id, level, question, correct_answer, explanation, type, audio_url, audio_text, created_at FROM exercises WHERE level = ? AND type = ?`
-	rows, err := s.db.Query(query, level, exType)
-	if err != nil {
-		return nil, fmt.Errorf("error querying exercises: %w", err)
-	}
-	defer rows.Close()
-
-	var exercises []Exercise
-	for rows.Next() {
-		var exercise Exercise
-		if err := rows.Scan(
-			&exercise.ID,
-			&exercise.Level,
-			&exercise.Question,
-			&exercise.CorrectAnswer,
-			&exercise.Explanation,
-			&exercise.Type,
-			&exercise.AudioURL,
-			&exercise.AudioText,
-			&exercise.CreatedAt,
-		); err != nil {
-			return nil, fmt.Errorf("error scanning exercise: %w", err)
-		}
-		exercises = append(exercises, exercise)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating over rows: %w", err)
-	}
-
-	return exercises, nil
-}
-func (s *storage) GetNextExerciseForUser(userID int64, level string, exTypes []string) (Exercise, error) {
-	// создаём плейсхолдеры (?, ?, ?) в зависимости от длины exTypes
-	placeholders := make([]string, len(exTypes))
-	args := []interface{}{userID, level}
-	for i, t := range exTypes {
-		placeholders[i] = "?"
-		args = append(args, t)
-	}
-
-	query := fmt.Sprintf(`
-		SELECT e.id, e.level, e.question, e.correct_answer, e.explanation, e.type, e.audio_url, e.audio_text, e.created_at
-		FROM exercises e
-		LEFT JOIN (
-			SELECT exercise_id, COUNT(*) as times_shown
-			FROM user_submissions
-			WHERE user_id = ?
-			GROUP BY exercise_id
-		) ue ON e.id = ue.exercise_id
-		WHERE e.level = ? AND e.type IN (%s)
-		AND (
-			ue.exercise_id IS NULL
-			OR (e.type = 'grammar' AND ue.times_shown < 2)
-			OR (e.type != 'grammar' AND ue.exercise_id IS NULL)
-		)
-		ORDER BY RANDOM()
-		LIMIT 1
-	`, strings.Join(placeholders, ","))
-
-	exercise := Exercise{}
-	err := s.db.QueryRow(query, args...).Scan(
-		&exercise.ID,
-		&exercise.Level,
-		&exercise.Question,
-		&exercise.CorrectAnswer,
-		&exercise.Explanation,
-		&exercise.Type,
-		&exercise.AudioURL,
-		&exercise.AudioText,
-		&exercise.CreatedAt,
-	)
-
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return exercise, ErrNotFound
-	} else if err != nil {
-		return exercise, fmt.Errorf("error getting next exercise: %w", err)
-	}
-
-	return exercise, nil
-}
-
-// MarkExerciseSent отмечает задание как отправленное пользователю
-func (s *storage) MarkExerciseSent(userID, exerciseID int64) error {
-	updateQuery := `
-		UPDATE users	
-		SET current_exercise_id = ?	
-		WHERE telegram_id = ?
-	`
-
-	_, err := s.db.Exec(updateQuery, exerciseID, userID)
-	if err != nil {
-		return fmt.Errorf("error updating current exercise: %w", err)
-	}
-
-	return nil
-}
-
-func (s *storage) ClearUserExercise(userID int64) error {
-	updateQuery := `
-		UPDATE users	
-		SET current_exercise_id = NULL	
-		WHERE telegram_id = ?
-	`
-
-	_, err := s.db.Exec(updateQuery, userID)
-	if err != nil {
-		return fmt.Errorf("error clearing current exercise: %w", err)
-	}
-
-	return nil
-}
-
-func (s *storage) UpdateUserLevel(userID int64, level string) error {
-	updateQuery := `
-		UPDATE users	
-		SET level = ?, current_exercise_id = NULL
-		WHERE telegram_id = ?
-	`
-
-	_, err := s.db.Exec(updateQuery, level, userID)
-	if err != nil {
-		return fmt.Errorf("error updating user level: %w", err)
-	}
-
-	return nil
-}
-
-func (s *storage) SaveUser(user *User) error {
-	query := `INSERT INTO users (telegram_id, level, points, exercises_done) VALUES (?, ?, ?, ?)`
-	_, err := s.db.Exec(query, user.TelegramID, user.Level, user.Points, user.ExercisesDone)
-	if err != nil {
-		return fmt.Errorf("error saving user: %w", err)
-	}
-	return nil
-}
-
-func (s *storage) GetExerciseByID(exerciseID int64) (Exercise, error) {
-	exercise := Exercise{}
-
-	query := `SELECT id, level, question, correct_answer, explanation, type, audio_url, audio_text,  created_at FROM exercises WHERE id = ?`
-	err := s.db.QueryRow(query, exerciseID).Scan(
-		&exercise.ID,
-		&exercise.Level,
-		&exercise.Question,
-		&exercise.CorrectAnswer,
-		&exercise.Explanation,
-		&exercise.Type,
-		&exercise.AudioURL,
-		&exercise.AudioText,
-		&exercise.CreatedAt,
-	)
-
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return exercise, ErrNotFound
-	} else if err != nil {
-		return exercise, fmt.Errorf("error getting exercise: %w", err)
-	}
-
-	return exercise, nil
-}
-
-//SaveSubmission
-
-func (s *storage) SaveSubmission(submission Submission) error {
-	query := `
-		INSERT INTO user_submissions (user_id, exercise_id, user_input, gpt_feedback, is_correct)
-		VALUES (?, ?, ?, ?, ?)
-	`
-
-	_, err := s.db.Exec(query,
-		submission.UserID,
-		submission.ExerciseID,
-		submission.UserInput,
-		submission.GPTFeedback,
-		submission.IsCorrect,
-	)
-
-	if err != nil {
-		return fmt.Errorf("error saving submission: %w", err)
-	}
-
-	return nil
-}
-
-func (s *storage) SaveBatchMeta(id string, status string) error {
-	_, err := s.db.Exec(`INSERT INTO openai_batches (id, status) VALUES (?, ?)`, id, status)
-	return err
-}
-
-func (s *storage) GetPendingBatches() ([]string, error) {
-	rows, err := s.db.Query(`SELECT id FROM openai_batches WHERE status = 'in_progress'`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var ids []string
-	for rows.Next() {
-		var id string
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		ids = append(ids, id)
-	}
-	return ids, nil
-}
-
-func (s *storage) UpdateBatchStatus(id string, status string) error {
-	_, err := s.db.Exec(`UPDATE openai_batches SET status = ? WHERE id = ?`, status, id)
-	return err
-}
-
-func (s *storage) GetAllUsers() ([]User, error) {
-	query := `SELECT id, telegram_id, level, points, exercises_done, current_exercise_id FROM users`
-	rows, err := s.db.Query(query)
-	if err != nil {
-		return nil, fmt.Errorf("error querying users: %w", err)
-	}
-	defer rows.Close()
-
-	var users []User
-	for rows.Next() {
-		var user User
-		if err := rows.Scan(&user.ID, &user.TelegramID, &user.Level, &user.Points, &user.ExercisesDone, &user.CurrentExerciseID); err != nil {
-			return nil, fmt.Errorf("error scanning user: %w", err)
-		}
-		users = append(users, user)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating over rows: %w", err)
-	}
-
-	return users, nil
-}
-
-func (s *storage) CountUnsolvedExercisesForUser(userID int64, level string) (int, error) {
-	query := `
-		SELECT COUNT(*)
-		FROM exercises e
-		LEFT JOIN user_submissions us ON e.id = us.exercise_id AND us.user_id = ?
-		WHERE e.level = ? AND us.exercise_id IS NULL
-	`
-
-	var count int
-	err := s.db.QueryRow(query, userID, level).Scan(&count)
-	if err != nil {
-		return 0, fmt.Errorf("error counting unsolved exercises: %w", err)
-	}
-
-	return count, nil
 }

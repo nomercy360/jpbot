@@ -11,7 +11,6 @@ import (
 	"io"
 	"jpbot/internal/db"
 	"log"
-	"strings"
 	"time"
 )
 
@@ -37,14 +36,12 @@ func NewClient(grokApiKey, openAIApiKey string) *Client {
 }
 
 type ExerciseFeedback struct {
-	Score      int    `json:"score" jsonschema_description:"Оценка ответа от 0 до 100"`
-	Feedback   string `json:"feedback" jsonschema_description:"Ошибки или комментарии к ответу"`
-	Suggestion string `json:"suggestion" jsonschema_description:"Улучшенный ответ"`
+	Score      int    `json:"score" jsonschema_description:"Числовая оценка, отражающая качество ответа или примера."`
+	Comment    string `json:"feedback" jsonschema_description:"Комментарий с объяснением оценки или замечаниями."`
+	Suggestion string `json:"suggestion,nullable" jsonschema_description:"Предложение по улучшению или исправлению."`
 }
 
 func GenerateSchema[T any]() interface{} {
-	// Structured Outputs uses a subset of JSON schema
-	// These flags are necessary to comply with the subset
 	reflector := jsonschema.Reflector{
 		AllowAdditionalProperties: false,
 		DoNotReference:            true,
@@ -54,44 +51,80 @@ func GenerateSchema[T any]() interface{} {
 	return schema
 }
 
-type VocabExplanation struct {
-	Example string `json:"Пример использования"`
+type WordTranslationEvaluation struct {
+	Score   int    `json:"score" jsonschema_description:"Оценка от 0 до 100, отражающая точность перевода."`
+	Comment string `json:"comment,nullable" jsonschema_description:"Комментарий с объяснением оценки или null, если перевод корректен."`
 }
 
-func (c *Client) ExplainVocabWord(word string, translation string) (VocabExplanation, error) {
+func (c *Client) CheckWordTranslation(word, translation, userInput string) (WordTranslationEvaluation, error) {
 	ctx := context.Background()
 
-	systemPrompt := `Ты преподаватель японского языка. Объясни значение японского слова, используя русский перевод.
-Ответь кратко в формате JSON:
-- Пример использования (на японском с фуриганой для сложных слов).`
+	systemPrompt := `Ты преподаватель японского языка. Проверь правильность перевода слова с русского на японский. Оцени перевод по 100-балльной шкале. Если перевод неверный или неполный, добавь краткий комментарий (1–2 предложения), объясняющий, в чём ошибка: — например, неверная часть речи, неточность значения, опущена важная часть, используется другое слово. Если перевод корректен — комментарий должен быть 'null'. Формат ответа: - оценка: (целое число от 0 до 100) - комментарий: (строка или 'null')`
 
-	userPrompt := fmt.Sprintf(`Слово: "%s"
-Перевод: "%s"`, word, translation)
+	examples := []openai.ChatCompletionMessageParamUnion{
+		openai.UserMessage(`Русское слово: "еда"
+Пользовательский перевод: 「食べ物」
+Правильный перевод: 「食べ物」`),
+		openai.AssistantMessage(`{
+  "score": 100,
+  "comment": null
+}`),
 
-	schema := GenerateSchema[VocabExplanation]()
+		openai.UserMessage(`Русское слово: "поход"
+Пользовательский перевод: 「道」
+Правильный перевод: 「ハイキング」`),
+		openai.AssistantMessage(`{
+  "score": 40,
+  "comment": "Перевод неточный: 「道」 означает 'дорога', а не 'поход' в смысле прогулки или похода в горы."
+}`),
+
+		openai.UserMessage(`Русское слово: "работать"
+Пользовательский перевод: 「仕事」
+Правильный перевод: 「働く」`),
+		openai.AssistantMessage(`{
+  "score": 50,
+  "comment": "Перевод неверный: 「仕事」 — это существительное 'работа', а не глагол 'работать'."
+}`),
+	}
+
+	userPrompt := fmt.Sprintf(`Русское слово: "%s"
+Пользовательский перевод: 「%s」
+Правильный перевод: 「%s」`,
+		translation,
+		userInput,
+		word,
+	)
+
+	messages := append(
+		[]openai.ChatCompletionMessageParamUnion{
+			openai.SystemMessage(systemPrompt),
+		},
+		examples...,
+	)
+
+	messages = append(messages, openai.UserMessage(userPrompt))
+
+	schema := GenerateSchema[WordTranslationEvaluation]()
 
 	resp, err := c.grokClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-		Model: "grok-3-fast-beta",
-		Messages: []openai.ChatCompletionMessageParamUnion{
-			openai.SystemMessage(systemPrompt),
-			openai.UserMessage(userPrompt),
-		},
+		Model:    "grok-3-fast-beta",
+		Messages: messages,
 		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
 			OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{
 				JSONSchema: openai.ResponseFormatJSONSchemaJSONSchemaParam{
-					Name:        "vocab_explanation",
-					Description: openai.String("Объяснение японского слова"),
-					Schema:      schema,
-					Strict:      openai.Bool(true),
+					Name:   "translation_evaluation",
+					Schema: schema,
+					Strict: openai.Bool(true),
 				},
 			},
 		},
 	})
+
 	if err != nil {
-		return VocabExplanation{}, fmt.Errorf("GPT request failed: %w", err)
+		return WordTranslationEvaluation{}, fmt.Errorf("GPT request failed: %w", err)
 	}
 
-	var explanation VocabExplanation
+	var explanation WordTranslationEvaluation
 	if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &explanation); err != nil {
 		return explanation, fmt.Errorf("failed to parse GPT response: %w", err)
 	}
@@ -104,61 +137,77 @@ func (c *Client) CheckExercise(submission db.Submission) (ExerciseFeedback, erro
 	schema := GenerateSchema[ExerciseFeedback]()
 
 	var systemPrompt, userPrompt string
+	var messages []openai.ChatCompletionMessageParamUnion
 
 	switch submission.Exercise.Type {
-	case db.ExerciseTypeTranslation:
-		systemPrompt = "Ты преподаватель японского языка. Проверь перевод с русского на японский по точности, грамматике и естественности. Ответь кратко в формате JSON: оценка (0-100), комментарий (ошибки или пояснение), улучшенный вариант."
-		userPrompt = fmt.Sprintf(`Оригинал: "%s"
-Перевод: 「%s」
-Правильный: 「%s」`,
-			submission.Exercise.Question,
-			submission.UserInput,
-			submission.Exercise.CorrectAnswer,
-		)
-
-	case db.ExerciseTypeQuestion:
-		systemPrompt = "Ты преподаватель японского языка. Проверь ответ на вопрос по точности, грамматике и естественности. Ответь кратко в формате JSON: оценка (0-100), комментарий (ошибки или пояснение), улучшенный вариант."
-		userPrompt = fmt.Sprintf(`Вопрос: "%s"
-Ответ: 「%s」`,
-			submission.Exercise.Question,
-			submission.UserInput,
-		)
-	case db.ExerciseTypeAudio:
-		systemPrompt = "Ты преподаватель японского языка. Проверь правильно ли ответили на вопрос по тексту. Ответь кратко в формате JSON: оценка (0-100), комментарий (ошибки или пояснение), улучшенный вариант."
-		userPrompt = fmt.Sprintf(`Текст: "%s"
-Вопрос: "%s"
-Ответ: 「%s」`,
-			submission.Exercise.AudioText,
-			submission.Exercise.Question,
-			submission.UserInput,
-		)
+	//	case db.ExerciseTypeTranslation:
+	//		systemPrompt = "Ты преподаватель японского языка. Проверь перевод с русского на японский по точности, грамматике и естественности. Ответь кратко в формате JSON: оценка (0-100), комментарий (ошибки или пояснение), улучшенный вариант."
+	//		userPrompt = fmt.Sprintf(`Оригинал: "%s"
+	//Перевод: 「%s」
+	//Правильный: 「%s」`,
+	//			submission.Exercise.Question,
+	//			submission.UserInput,
+	//			submission.Exercise.CorrectAnswer,
+	//		)
+	//
+	//	case db.ExerciseTypeQuestion:
+	//		systemPrompt = "Ты преподаватель японского языка. Проверь ответ на вопрос по точности, грамматике и естественности. Ответь кратко в формате JSON: оценка (0-100), комментарий (ошибки или пояснение), улучшенный вариант."
+	//		userPrompt = fmt.Sprintf(`Вопрос: "%s"
+	//Ответ: 「%s」`,
+	//			submission.Exercise.Question,
+	//			submission.UserInput,
+	//		)
+	//	case db.ExerciseTypeAudio:
+	//		systemPrompt = "Ты преподаватель японского языка. Проверь правильно ли ответили на вопрос по тексту. Ответь кратко в формате JSON: оценка (0-100), комментарий (ошибки или пояснение), улучшенный вариант."
+	//		userPrompt = fmt.Sprintf(`Текст: "%s"
+	//Вопрос: "%s"
+	//Ответ: 「%s」`,
+	//			submission.Exercise.AudioText,
+	//			submission.Exercise.Question,
+	//			submission.UserInput,
+	//		)
 	case db.ExerciseTypeGrammar:
-		systemPrompt = "Ты преподаватель японского языка. Проверь, правильно ли пользователь использовал указанную грамматическую конструкцию в своем предложении. Ответь кратко в формате JSON: оценка (0-100), комментарий (ошибки или пояснение), улучшенный вариант (если есть ошибки)."
-		userPrompt = fmt.Sprintf(`Грамматическая конструкция: "%s"
-Пользовательский ответ: 「%s」`,
-			submission.Exercise.Question,
+		systemPrompt = `Ты — преподаватель японского языка. Проверь, правильно ли ученик использовал грамматическую конструкцию в предложении. Укажи:
+	1.	score: оценка от 0 до 100
+	2.	comment: краткое объяснение (до 1–2 предложений)
+	3.	suggestion: только исправленное предложение и его перевод, без пояснений`
+		userPrompt = fmt.Sprintf(`Грамматика: %s
+Пример ученика: %s`,
+			submission.Exercise.Content.Grammar,
 			submission.UserInput,
 		)
-	case db.ExerciseTypeVocab:
-		systemPrompt = `Ты преподаватель японского языка. Проверь правильность перевода слова с русского на японский. 
-Ответь кратко в формате JSON:
-- оценка (0–100),
-- комментарий (пример использования слова, какие-то особенности),
-- улучшенный вариант (если есть ошибки).`
-
-		userPrompt = fmt.Sprintf(`Русское слово: "%s"
-Пользовательский Перевод: 「%s」
-Правильный перевод: 「%s」`,
-			submission.Exercise.Question,
-			submission.UserInput,
-			submission.Exercise.CorrectAnswer,
-		)
+		examples := []openai.ChatCompletionMessageParamUnion{
+			openai.SystemMessage(systemPrompt),
+			openai.UserMessage(`Грамматика: 〜たい
+Пример ученика: 日本へ行きたいです。`),
+			openai.AssistantMessage(`{
+  "score": 90,
+  "comment": "Предложение грамматически верное и звучит естественно.",
+  "suggestion": null
+}`),
+			openai.UserMessage(`Грамматика: 〜てもいいです
+Пример ученика: 食べてもいいと思います。`),
+			openai.AssistantMessage(`{
+"score": 80,
+"comment": "Грамматика используется правильно, хотя '〜てもいい' обычно выражает разрешение, а не мнение.",
+"suggestion": null
+}`),
+			openai.UserMessage(`Грамматика: 〜ましょうか
+Пример ученика: 宿題をしましょうかね。`),
+			openai.AssistantMessage(`{
+"score": 60,
+"comment": "Фраза выглядит как внутренняя речь, но ましょうか обычно используется в вопросе к собеседнику. Частица ね делает её неестественной.",
+"suggestion": "宿題をしましょうか？"
+}`),
+			openai.UserMessage(userPrompt),
+		}
+		messages = append(messages, examples...)
 	default:
 		return ExerciseFeedback{}, fmt.Errorf("unknown exercise type: %s", submission.Exercise.Type)
 	}
 
-	resp, err := c.grokClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-		Model: "grok-3-fast-beta",
+	resp, err := c.openaiClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+		Model: openai.ChatModelGPT4oMini,
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.SystemMessage(systemPrompt),
 			openai.UserMessage(userPrompt),
@@ -166,10 +215,9 @@ func (c *Client) CheckExercise(submission db.Submission) (ExerciseFeedback, erro
 		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
 			OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{
 				JSONSchema: openai.ResponseFormatJSONSchemaJSONSchemaParam{
-					Name:        "exercise_feedback",
-					Description: openai.String("Обратная связь по переводу с японского"),
-					Schema:      schema,
-					Strict:      openai.Bool(true),
+					Name:   "feedback",
+					Schema: schema,
+					Strict: openai.Bool(true),
 				},
 			},
 		},
@@ -206,11 +254,6 @@ type AudioTask struct {
 	Explanation string `json:"explanation" jsonschema_description:"Подсказка по грамматике, словам или контексту"`
 }
 
-type VocabTask struct {
-	Russian  string `json:"russian" jsonschema_description:"Русское слово"`
-	Japanese string `json:"japanese" jsonschema_description:"Перевод на японском языке"`
-}
-
 type GrammarTask struct {
 	Question string `json:"question" jsonschema_description:"Грамматическая конструкция и ее использование"`
 }
@@ -244,14 +287,6 @@ type GrammarTaskList struct {
 }
 
 func (t GrammarTaskList) GetTasks() []GrammarTask {
-	return t.Tasks
-}
-
-type VocabTaskList struct {
-	Tasks []VocabTask `json:"tasks" jsonschema_description:"Список сгенерированных заданий"`
-}
-
-func (t VocabTaskList) GetTasks() []VocabTask {
 	return t.Tasks
 }
 
@@ -326,16 +361,6 @@ func (c *Client) CreateBatchTask(level string, types []string, existing map[stri
 %s
 `, tasksPerLevel, level, existingList)
 			schema = GenerateSchema[GrammarTaskList]()
-		case db.ExerciseTypeVocab:
-			systemPrompt = "Ты преподаватель японского языка. Сгенерируй задания на перевод японских слов на русский язык. Используй ежедневные популярные слова. Это может быть любая часть речи, включая существительные, глаголы и прилагательные."
-			userPrompt = fmt.Sprintf(`Сгенерируй %d уникальных заданий на перевод японских слов. Укажи:
-- Русское слово
-- Перевод на японском
-
-Не используй слова ниже:
-%s
-`, tasksPerLevel, existingList)
-			schema = GenerateSchema[VocabTaskList]()
 		default:
 			log.Printf("Unknown exercise type: %s", exType)
 			continue
@@ -399,12 +424,6 @@ func (c *Client) CreateBatchTask(level string, types []string, existing map[stri
 				return nil, fmt.Errorf("failed to parse grammar task list for %s-%s: %w", exType, level, err)
 			}
 			result.GeneratedTaskList = taskList
-		case db.ExerciseTypeVocab:
-			var taskList VocabTaskList
-			if err := json.Unmarshal([]byte(resp.Choices[0].Message.Content), &taskList); err != nil {
-				return nil, fmt.Errorf("failed to parse vocab task list for %s-%s: %w", exType, level, err)
-			}
-			result.GeneratedTaskList = taskList
 		default:
 			log.Printf("Unknown exercise type in response: %s", exType)
 			continue
@@ -431,18 +450,6 @@ func (c *Client) GenerateAudio(text string) (io.ReadCloser, error) {
 	return resp.Body, nil
 }
 
-func getLevelAndTypeFromCustomID(customID string) (string, string) {
-	parts := strings.Split(customID, "-")
-	if len(parts) < 3 {
-		return "", ""
-	}
-
-	level := parts[len(parts)-1]
-	exType := parts[len(parts)-2]
-
-	return level, exType
-}
-
 type GeneratedTaskList[T any] interface {
 	GetTasks() []T
 }
@@ -453,12 +460,39 @@ type BatchResult struct {
 	GeneratedTaskList interface{} `json:"generated_task_list"` // Используем interface{} для гибкости
 }
 
-func (c *Client) GetBatchResults(batchID string) ([]BatchResult, bool, error) {
+type ExampleContent struct {
+	Examples []struct {
+		Sentence []struct {
+			Fragment string  `json:"fragment"`
+			Furigana *string `json:"furigana"`
+		} `json:"sentence"`
+		Translation string `json:"translation"`
+	} `json:"examples"`
+}
+
+type WordResult struct {
+	WordID   string
+	Examples ExampleContent
+}
+
+type OpenAIResponse struct {
+	CustomID string `json:"custom_id"`
+	Response struct {
+		Body struct {
+			Output []struct {
+				Content []struct {
+					Text string `json:"text"`
+				} `json:"content"`
+			} `json:"output"`
+		} `json:"body"`
+	} `json:"response"`
+}
+
+func (c *Client) GetBatchResults(batchID string) ([]OpenAIResponse, bool, error) {
 	ctx := context.Background()
+	var results []OpenAIResponse
 
-	var results []BatchResult
-
-	batch, err := c.grokClient.Batches.Get(ctx, batchID)
+	batch, err := c.openaiClient.Batches.Get(ctx, batchID)
 	if err != nil {
 		return results, false, fmt.Errorf("failed to retrieve batch: %w", err)
 	}
@@ -472,10 +506,11 @@ func (c *Client) GetBatchResults(batchID string) ([]BatchResult, bool, error) {
 		return results, false, fmt.Errorf("no output file available")
 	}
 
-	resp, err := c.grokClient.Files.Content(ctx, batch.OutputFileID)
+	resp, err := c.openaiClient.Files.Content(ctx, batch.OutputFileID)
 	if err != nil {
 		return results, false, fmt.Errorf("failed to get file content: %w", err)
 	}
+
 	defer resp.Body.Close()
 
 	content, err := io.ReadAll(resp.Body)
@@ -490,50 +525,13 @@ func (c *Client) GetBatchResults(batchID string) ([]BatchResult, bool, error) {
 			continue
 		}
 
-		var batchResponse struct {
-			CustomID string `json:"custom_id"`
-			Response struct {
-				Body struct {
-					Choices []struct {
-						Message struct {
-							Content string `json:"content"`
-						} `json:"message"`
-					} `json:"choices"`
-				} `json:"body"`
-			} `json:"response"`
-		}
+		var batchResponse OpenAIResponse
 
 		if err := json.Unmarshal(line, &batchResponse); err != nil {
 			return results, false, fmt.Errorf("failed to parse batch response: %w", err)
 		}
 
-		level, exType := getLevelAndTypeFromCustomID(batchResponse.CustomID)
-
-		var result BatchResult
-		result.Type = exType
-		result.Level = level
-
-		switch exType {
-		case db.ExerciseTypeTranslation:
-			var taskList TranslationTaskList
-			if err := json.Unmarshal([]byte(batchResponse.Response.Body.Choices[0].Message.Content), &taskList); err != nil {
-				return results, false, fmt.Errorf("failed to parse translation task list: %w", err)
-			}
-			result.GeneratedTaskList = taskList // Присваиваем напрямую как interface{}
-
-		case db.ExerciseTypeQuestion:
-			var taskList QuestionTaskList
-			if err := json.Unmarshal([]byte(batchResponse.Response.Body.Choices[0].Message.Content), &taskList); err != nil {
-				return results, false, fmt.Errorf("failed to parse question task list: %w", err)
-			}
-			result.GeneratedTaskList = taskList // Присваиваем напрямую как interface{}
-
-		default:
-			log.Printf("Unknown exercise type: %s", exType)
-			continue
-		}
-
-		results = append(results, result)
+		results = append(results, batchResponse)
 	}
 
 	return results, true, nil

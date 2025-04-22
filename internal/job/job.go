@@ -2,29 +2,28 @@ package job
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	telegram "github.com/go-telegram/bot"
 	"jpbot/internal/ai"
 	"jpbot/internal/db"
 	"log"
-	"time"
+	"os"
+	"strconv"
+	"strings"
 )
 
 type Storager interface {
 	SaveTasksBatch(tasks []db.Exercise) error
+	SaveWordsBatch(words []db.Word) error
 	GetExercisesByLevel(level string) ([]db.Exercise, error)
-	SaveBatchMeta(id string, status string) error
-	GetPendingBatches() ([]string, error)
-	UpdateBatchStatus(id string, status string) error
 	GetExercisesByLevelAndType(level, exType string) ([]db.Exercise, error)
 	GetAllUsers() ([]db.User, error)
 	CountUnsolvedExercisesForUser(userID int64, level string) (int, error)
 }
 
 type OpenAIClient interface {
-	// CreateBatchTask(levels, types []string, existing map[string][]string, tasksPerLevel int) (*ai.BatchTask, error)
-	CreateBatchTask(level string, types []string, existing map[string][]string, tasksPerLevel int) ([]ai.BatchResult, error)
-	GetBatchResults(batchID string) ([]ai.BatchResult, bool, error)
+	GetBatchResults(batchID string) ([]ai.OpenAIResponse, bool, error)
 }
 
 type job struct {
@@ -41,279 +40,257 @@ func NewJob(db Storager, openaiClient *ai.Client, bot *telegram.Bot) *job {
 	}
 }
 
-func withRetry[T any](attempts int, delay time.Duration, fn func() (T, error)) (T, error) {
-	var lastErr error
-	var zero T
-	for i := 0; i < attempts; i++ {
-		result, err := fn()
-		if err == nil {
-			return result, nil
-		}
-		lastErr = err
-		log.Printf("Attempt %d failed: %v. Retrying in %s...", i+1, err, delay)
-		time.Sleep(delay)
-	}
-	return zero, fmt.Errorf("all %d retry attempts failed: %w", attempts, lastErr)
+type WordExampleList struct {
+	Examples []db.Example `json:"examples"`
 }
 
-func (j *job) generateTasks() error {
-	levels := []string{db.LevelN5, db.LevelN4, db.LevelN3, db.LevelBeginner}
-	types := []string{db.ExerciseTypeGrammar, db.ExerciseTypeAudio, db.ExerciseTypeTranslation, db.ExerciseTypeQuestion}
-	existing := make(map[string][]string)
+type Word struct {
+	Index       int     `json:"index"` // это твой word_id
+	Kanji       *string `json:"kanji"`
+	Kana        string  `json:"kana"`
+	Translation string  `json:"translation"`
+}
 
-	for _, level := range levels {
-		for _, exType := range types {
-			exercises, err := j.db.GetExercisesByLevelAndType(level, exType)
-			if err != nil {
-				return fmt.Errorf("failed to get exercises for level %s and type %s: %w", level, exType, err)
-			}
+func FindWordByID(filePath string, wordID int) (*Word, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file: %w", err)
+	}
 
-			for _, exercise := range exercises {
-				key := fmt.Sprintf("%s|%s", exType, level)
-				existing[key] = append(existing[key], exercise.Question)
-			}
+	var words []Word
+	if err := json.Unmarshal(data, &words); err != nil {
+		return nil, fmt.Errorf("failed to parse JSON: %w", err)
+	}
+
+	for _, w := range words {
+		if w.Index == wordID {
+			return &w, nil
 		}
 	}
 
-	for _, level := range levels {
-		log.Printf("Starting task generation for level: %s, types: %v", level, types)
+	return nil, fmt.Errorf("word with id %d not found", wordID)
+}
 
-		batch, err := withRetry(3, 5*time.Second, func() ([]ai.BatchResult, error) {
-			return j.openaiClient.CreateBatchTask(level, types, existing, 10)
-		})
+func (j *job) syncWordsTranslationBatchResult(level, batchID string) error {
+	result, ok, err := j.openaiClient.GetBatchResults(batchID)
+	if err != nil {
+		log.Printf("Failed to fetch results for batch %s: %v", batchID, err)
+		return err
+	}
 
-		if err != nil {
-			log.Printf("Failed to generate tasks for level %s: %v", level, err)
+	if !ok {
+		log.Printf("Batch %s not completed yet.", batchID)
+		return nil
+	}
+
+	type exampleContent struct {
+		Examples []struct {
+			Sentence []struct {
+				Fragment string  `json:"fragment"`
+				Furigana *string `json:"furigana"`
+			} `json:"sentence"`
+			Translation string `json:"translation"`
+		} `json:"examples"`
+	}
+
+	var words []db.Word
+
+	for _, batchResponse := range result {
+		var ex exampleContent
+		if err := json.Unmarshal([]byte(batchResponse.Response.Body.Output[0].Content[0].Text), &ex); err != nil {
+			log.Printf("Failed to parse example JSON for %s: %v", batchResponse.CustomID, err)
 			continue
 		}
 
-		var exercises []db.Exercise
-		for _, res := range batch {
-			switch res.Type {
-			case db.ExerciseTypeQuestion:
-				taskList, ok := res.GeneratedTaskList.(ai.QuestionTaskList)
-				if !ok {
-					log.Printf("Failed to convert task list to QuestionTaskList: %v", res.GeneratedTaskList)
-					continue
-				}
-				for _, task := range taskList.GetTasks() {
-					exercise := db.Exercise{
-						Level:       res.Level,
-						Type:        res.Type,
-						Question:    task.Question,
-						Explanation: task.Explanation,
-					}
-					exercises = append(exercises, exercise)
-				}
-
-			case db.ExerciseTypeTranslation:
-				taskList, ok := res.GeneratedTaskList.(ai.TranslationTaskList)
-				if !ok {
-					log.Printf("Failed to convert task list to TranslationTaskList: %v", res.GeneratedTaskList)
-					continue
-				}
-				for _, task := range taskList.GetTasks() {
-					exercise := db.Exercise{
-						Level:         res.Level,
-						Type:          res.Type,
-						Question:      task.Russian,
-						CorrectAnswer: task.Japanese,
-						Explanation:   task.Explanation,
-					}
-					exercises = append(exercises, exercise)
-				}
-			case db.ExerciseTypeAudio:
-				taskList, ok := res.GeneratedTaskList.(ai.AudioTaskList)
-				if !ok {
-					log.Printf("Failed to convert task list to AudioTaskList: %v", res.GeneratedTaskList)
-					continue
-				}
-
-				for _, task := range taskList.GetTasks() {
-					exercise := db.Exercise{
-						Level:         res.Level,
-						Type:          res.Type,
-						Question:      task.Question,
-						CorrectAnswer: task.Answer,
-						AudioText:     task.Text,
-						Explanation:   task.Explanation,
-					}
-					exercises = append(exercises, exercise)
-				}
-			case db.ExerciseTypeGrammar:
-				taskList, ok := res.GeneratedTaskList.(ai.GrammarTaskList)
-				if !ok {
-					log.Printf("Failed to convert task list to GrammarTaskList: %v", res.GeneratedTaskList)
-					continue
-				}
-
-				for _, task := range taskList.GetTasks() {
-					exercise := db.Exercise{
-						Level:    res.Level,
-						Type:     res.Type,
-						Question: task.Question,
-					}
-					exercises = append(exercises, exercise)
-				}
-			case db.ExerciseTypeVocab:
-				taskList, ok := res.GeneratedTaskList.(ai.VocabTaskList)
-				if !ok {
-					log.Printf("Failed to convert task list to VocabTaskList: %v", res.GeneratedTaskList)
-					continue
-				}
-
-				for _, task := range taskList.GetTasks() {
-					exercise := db.Exercise{
-						Level:         res.Level,
-						Type:          res.Type,
-						Question:      task.Russian,
-						CorrectAnswer: task.Japanese,
-					}
-					exercises = append(exercises, exercise)
-				}
-			}
-
+		parts := strings.Split(batchResponse.CustomID, "word_")
+		if len(parts) != 2 {
+			log.Printf("Invalid custom_id format: %s", batchResponse.CustomID)
+			continue
 		}
 
-		if err := j.db.SaveTasksBatch(exercises); err != nil {
-			log.Printf("Failed to save tasks from batch: %v", err)
+		wid, _ := strconv.Atoi(parts[1])
+
+		wd, err := FindWordByID(fmt.Sprintf("%s.json", level), wid)
+
+		if err != nil {
+			log.Printf("Failed to find word with ID %d: %v", wid, err)
 		}
+
+		exmpJSON, err := json.Marshal(ex.Examples)
+		if err != nil {
+			log.Printf("Failed to marshal examples for word %d: %v", wd.Index, err)
+			continue
+		}
+
+		var exmpList []db.Example
+		if err := json.Unmarshal(exmpJSON, &exmpList); err != nil {
+			log.Printf("Failed to unmarshal examples for word %d: %v", wd.Index, err)
+			continue
+		}
+
+		words = append(words, db.Word{
+			Kana:        wd.Kana,
+			Kanji:       wd.Kanji,
+			Translation: wd.Translation,
+			Examples:    exmpList,
+			Level:       strings.ToUpper(level),
+		})
+	}
+
+	if err := j.db.SaveWordsBatch(words); err != nil {
+		log.Printf("Failed to save words from batch %s: %v", batchID, err)
+		return err
 	}
 	return nil
 }
 
-func (j *job) syncBatchResults() error {
-	batchIDs, err := j.db.GetPendingBatches()
+func (j *job) syncExercises() error {
+	levels := []string{db.LevelN5}
+
+	for _, level := range levels {
+		// open file questions_level.json
+		filePath := fmt.Sprintf("questions_%s.json", level)
+		file, err := os.Open(filePath)
+		if err != nil {
+			return fmt.Errorf("failed to open file: %w", err)
+		}
+		defer file.Close()
+		// read file, json array of string
+		var questions []string
+		if err := json.NewDecoder(file).Decode(&questions); err != nil {
+			return fmt.Errorf("failed to decode JSON: %w", err)
+		}
+
+		// save questions to db
+		var exercises []db.Exercise
+		for _, question := range questions {
+			exercise := db.Exercise{
+				Level:   strings.ToUpper(level),
+				Type:    db.ExerciseTypeQuestion,
+				Content: db.Content{Grammar: question},
+			}
+			exercises = append(exercises, exercise)
+		}
+
+		if err := j.db.SaveTasksBatch(exercises); err != nil {
+			return fmt.Errorf("failed to save exercises: %w", err)
+		}
+		log.Printf("Saved %d exercises for level %s", len(exercises), level)
+
+		// open file audio_level.json
+		filePath = fmt.Sprintf("audio_%s.json", level)
+		file, err = os.Open(filePath)
+		if err != nil {
+			return fmt.Errorf("failed to open file: %w", err)
+		}
+
+		defer file.Close()
+		// read file,
+		//[
+		//  {
+		//    "text": "きのう、スーパーへ行きました。りんごとパンを買いました。",
+		//    "question": "何を買いましたか？"
+		//  },
+
+		type AudioExercise struct {
+			Text     string `json:"text"`
+			Question string `json:"question"`
+		}
+
+		var audioExercises []AudioExercise
+		if err := json.NewDecoder(file).Decode(&audioExercises); err != nil {
+			return fmt.Errorf("failed to decode JSON: %w", err)
+		}
+
+		// save questions to db
+		for _, audioExercise := range audioExercises {
+			exercise := db.Exercise{
+				Level:   strings.ToUpper(level),
+				Type:    db.ExerciseTypeAudio,
+				Content: db.Content{Grammar: audioExercise.Question},
+			}
+			exercises = append(exercises, exercise)
+		}
+
+	}
+}
+
+func (j *job) syncExerciseBatchResult(level, batchID string) error {
+	result, ok, err := j.openaiClient.GetBatchResults(batchID)
 	if err != nil {
-		return fmt.Errorf("failed to get pending batches: %w", err)
+		log.Printf("Failed to fetch results for batch %s: %v", batchID, err)
+		return err
 	}
 
-	for _, id := range batchIDs {
-		result, ok, err := j.openaiClient.GetBatchResults(id)
-		if err != nil {
-			log.Printf("Failed to fetch results for batch %s: %v", id, err)
+	if !ok {
+		log.Printf("Batch %s not completed yet.", batchID)
+		return nil
+	}
+
+	type exampleContent struct {
+		Grammar   string `json:"grammar"`
+		Meaning   string `json:"meaning"`
+		Structure string `json:"structure"`
+		Example   string `json:"example"`
+	}
+
+	var exercises []db.Exercise
+
+	for _, batchResponse := range result {
+		var example exampleContent
+		if err := json.Unmarshal([]byte(batchResponse.Response.Body.Output[0].Content[0].Text), &example); err != nil {
+			log.Printf("Failed to parse example JSON for %s: %v", batchResponse.CustomID, err)
 			continue
 		}
 
-		if ok {
-			var exercises []db.Exercise
-			for _, res := range result {
-				switch res.Type {
-				case db.ExerciseTypeQuestion:
-					taskList, ok := res.GeneratedTaskList.(ai.QuestionTaskList)
-					if !ok {
-						log.Printf("Failed to convert task list to QuestionTaskList: %v", res.GeneratedTaskList)
-						continue
-					}
-					for _, task := range taskList.GetTasks() {
-						exercise := db.Exercise{
-							Level:       res.Level,
-							Type:        res.Type,
-							Question:    task.Question,
-							Explanation: task.Explanation,
-						}
-						exercises = append(exercises, exercise)
-					}
-
-				case db.ExerciseTypeTranslation:
-					taskList, ok := res.GeneratedTaskList.(ai.TranslationTaskList)
-					if !ok {
-						log.Printf("Failed to convert task list to TranslationTaskList: %v", res.GeneratedTaskList)
-						continue
-					}
-					for _, task := range taskList.GetTasks() {
-						exercise := db.Exercise{
-							Level:         res.Level,
-							Type:          res.Type,
-							Question:      task.Russian,
-							CorrectAnswer: task.Japanese,
-							Explanation:   task.Explanation,
-						}
-						exercises = append(exercises, exercise)
-					}
-				}
-			}
-
-			if err := j.db.SaveTasksBatch(exercises); err != nil {
-				log.Printf("Failed to save tasks from batch %s: %v", id, err)
-				continue
-			}
-
-			if err := j.db.UpdateBatchStatus(id, "completed"); err != nil {
-				log.Printf("Failed to update batch status: %v", err)
-			}
+		content := db.Content{
+			Grammar:   example.Grammar,
+			Meaning:   example.Meaning,
+			Structure: example.Structure,
+			Example:   example.Example,
 		}
+
+		exercise := db.Exercise{
+			Level:   strings.ToUpper(level),
+			Type:    db.ExerciseTypeGrammar,
+			Content: content,
+		}
+
+		exercises = append(exercises, exercise)
 	}
+
+	if err := j.db.SaveTasksBatch(exercises); err != nil {
+		log.Printf("Failed to save words from batch %s: %v", batchID, err)
+		return err
+	}
+
 	return nil
 }
 
 func (j *job) Run(ctx context.Context) {
-	location, err := time.LoadLocation("Europe/Moscow")
-	if err != nil {
-		log.Fatalf("Failed to load Moscow timezone: %v", err)
-	}
-
 	//if err := j.generateTasks(); err != nil {
 	//	log.Printf("Failed to sync batch results: %v", err)
 	//}
 
-	for {
-		now := time.Now().In(location)
-		nextRun := time.Date(now.Year(), now.Month(), now.Day(), 6, 0, 0, 0, location)
+	//wordsBatches := map[string]string{
+	//	"n5": "batch_6805b3554e908190a88ba9884f4920a2",
+	//	"n4": "batch_6805bf9739c481908d50cbb99ce43851",
+	//	"n3": "batch_6805bf9ece5081908db730057347c555",
+	//}
+	//
+	//for level, batchID := range wordsBatches {
+	//	if err := j.syncWordsTranslationBatchResult(level, batchID); err != nil {
+	//		log.Printf("Failed to sync batch results: %v", err)
+	//	}
+	//}
 
-		if now.After(nextRun) {
-			nextRun = nextRun.Add(24 * time.Hour)
-		}
-
-		waitDuration := time.Until(nextRun)
-		log.Printf("Next notification job scheduled at: %v (Moscow Time)", nextRun)
-
-		timer := time.NewTimer(waitDuration)
-
-		select {
-		case <-timer.C:
-			log.Println("Running notification job...")
-
-			if err := j.generateTasks(); err != nil {
-				log.Printf("Failed to generate tasks: %v", err)
-			}
-
-			// notify the bot about the new tasks
-			users, err := j.db.GetAllUsers()
-			if err != nil {
-				log.Printf("Failed to get users: %v", err)
-				continue
-			}
-
-			for _, user := range users {
-				if user.Level == "" {
-					continue
-				}
-
-				unanswered, err := j.db.CountUnsolvedExercisesForUser(user.ID, user.Level)
-				if err != nil {
-					log.Printf("Failed to count unanswered exercises for user %d: %v", user.ID, err)
-					continue
-				}
-
-				if unanswered > 0 {
-					text := fmt.Sprintf("Доступно %d новых заданий для уровня %s. /task чтобы получить задание.", unanswered, user.Level)
-					msg := &telegram.SendMessageParams{
-						ChatID: user.TelegramID,
-						Text:   text,
-					}
-
-					if _, err := j.bot.SendMessage(context.Background(), msg); err != nil {
-						log.Printf("Failed to send message to user %d: %v", user.ID, err)
-					}
-
-					log.Printf("Sent notification to user: %d", user.ID)
-				}
-			}
-		case <-ctx.Done():
-			log.Println("Stopping notification job...")
-			timer.Stop()
-			return
-		}
-	}
+	//grammarBatches := map[string]string{
+	//	"n5": "batch_68065a7dae448190974adbfa232fae3d",
+	//}
+	//
+	//for level, batchID := range grammarBatches {
+	//	if err := j.syncExerciseBatchResult(level, batchID); err != nil {
+	//		log.Printf("Failed to sync batch results: %v", err)
+	//	}
+	//}
 }

@@ -27,6 +27,8 @@ RUN apk add --no-cache \
     tzdata
 
 COPY --from=build /go/bin/main /app/main
-COPY vocab.json /app/vocab.json
+COPY n3.json /app/n3.json
+COPY n4.json /app/n4.json
+COPY n5.json /app/n5.json
 
 CMD [ "/app/main" ]

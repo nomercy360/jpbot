@@ -1,0 +1,3626 @@
+[
+  {
+    "index": 4,
+    "kanji": "",
+    "kana": "あ",
+    "translation": "あ ах!"
+  },
+  {
+    "index": 5,
+    "kanji": "",
+    "kana": "ああ",
+    "translation": "ああ так, таким образом"
+  },
+  {
+    "index": 6,
+    "kanji": "挨拶（する）",
+    "kana": "あいさつ",
+    "translation": "приветствие, обращение"
+  },
+  {
+    "index": 7,
+    "kanji": "間",
+    "kana": "あいだ",
+    "translation": "промежуток, интервал"
+  },
+  {
+    "index": 8,
+    "kanji": "合う",
+    "kana": "あう",
+    "translation": "соответствовать, совпадать, быть правильным"
+  },
+  {
+    "index": 9,
+    "kanji": "赤ちゃん",
+    "kana": "あかちゃん",
+    "translation": "младенец"
+  },
+  {
+    "index": 10,
+    "kanji": "上がる",
+    "kana": "あがる",
+    "translation": "подниматься, взбираться, всходить,кушать"
+  },
+  {
+    "index": 11,
+    "kanji": "赤ん坊",
+    "kana": "あかんぼう",
+    "translation": "младенец"
+  },
+  {
+    "index": 12,
+    "kanji": "空く",
+    "kana": "あく",
+    "translation": "открываться, раскрываться, освобождаться, быть свободным"
+  },
+  {
+    "index": 13,
+    "kanji": "上げる",
+    "kana": "あげる",
+    "translation": "поднимать, повышать"
+  },
+  {
+    "index": 14,
+    "kanji": "朝寝坊",
+    "kana": "あさねぼう",
+    "translation": "соня"
+  },
+  {
+    "index": 15,
+    "kanji": "味",
+    "kana": "あじ",
+    "translation": "вкус"
+  },
+  {
+    "index": 16,
+    "kanji": "明日",
+    "kana": "あす",
+    "translation": "завтра"
+  },
+  {
+    "index": 17,
+    "kanji": "遊び",
+    "kana": "あそび",
+    "translation": "игра"
+  },
+  {
+    "index": 18,
+    "kanji": "集まる",
+    "kana": "あつまる",
+    "translation": "собираться, встречаться, накапливаться"
+  },
+  {
+    "index": 19,
+    "kanji": "集める",
+    "kana": "あつめる",
+    "translation": "собирать, созывать,коллекционировать, накапливать"
+  },
+  {
+    "index": 20,
+    "kanji": "謝る",
+    "kana": "あやまる",
+    "translation": "извиняться"
+  },
+  {
+    "index": 21,
+    "kanji": "",
+    "kana": "アルコール",
+    "translation": "спирт, алкоголь"
+  },
+  {
+    "index": 22,
+    "kanji": "",
+    "kana": "アルバイト",
+    "translation": "подработка"
+  },
+  {
+    "index": 24,
+    "kanji": "安全",
+    "kana": "あんぜん",
+    "translation": "безопасность"
+  },
+  {
+    "index": 25,
+    "kanji": "",
+    "kana": "あんな",
+    "translation": "такой, такая"
+  },
+  {
+    "index": 27,
+    "kanji": "以下",
+    "kana": "いか",
+    "translation": "нижеследующий..., меньше..., менее"
+  },
+  {
+    "index": 28,
+    "kanji": "以外",
+    "kana": "いがい",
+    "translation": "кроме"
+  },
+  {
+    "index": 29,
+    "kanji": "如何",
+    "kana": "いかが",
+    "translation": "как насчет...?"
+  },
+  {
+    "index": 30,
+    "kanji": "医学",
+    "kana": "いがく",
+    "translation": "медицина (наука)"
+  },
+  {
+    "index": 31,
+    "kanji": "生きる",
+    "kana": "いきる",
+    "translation": "жить, быть живым"
+  },
+  {
+    "index": 32,
+    "kanji": "",
+    "kana": "いくらても",
+    "translation": "сколько бы ни..."
+  },
+  {
+    "index": 33,
+    "kanji": "意見",
+    "kana": "いけん",
+    "translation": "мнение, взгляд"
+  },
+  {
+    "index": 34,
+    "kanji": "石",
+    "kana": "いし",
+    "translation": "камень"
+  },
+  {
+    "index": 35,
+    "kanji": "苛める",
+    "kana": "いじめる",
+    "translation": "мучать, дразнить"
+  },
+  {
+    "index": 36,
+    "kanji": "以上",
+    "kana": "いじょう",
+    "translation": "свыше, более, сверх-, вышеуказанное"
+  },
+  {
+    "index": 37,
+    "kanji": "急ぐ",
+    "kana": "いそぐ",
+    "translation": "спешить"
+  },
+  {
+    "index": 38,
+    "kanji": "致す",
+    "kana": "いたす",
+    "translation": "делать"
+  },
+  {
+    "index": 39,
+    "kanji": "頂く",
+    "kana": "いただく",
+    "translation": "получать, брать, принимать, есть, пить(скромно о себе)"
+  },
+  {
+    "index": 40,
+    "kanji": "一度",
+    "kana": "いちど",
+    "translation": "(один) раз"
+  },
+  {
+    "index": 42,
+    "kanji": "一生懸命",
+    "kana": "いっしょうけんめい",
+    "translation": "изо всех сил"
+  },
+  {
+    "index": 43,
+    "kanji": "行って参ります",
+    "kana": "いってまいります",
+    "translation": "до свидания (я вернусь)"
+  },
+  {
+    "index": 44,
+    "kanji": "一杯",
+    "kana": "いっぱい",
+    "translation": "полный, один стакан, выпивка"
+  },
+  {
+    "index": 45,
+    "kanji": "一般（に）",
+    "kana": "いっぱん",
+    "translation": "общий, обычный, в общем"
+  },
+  {
+    "index": 46,
+    "kanji": "糸",
+    "kana": "いと",
+    "translation": "нить"
+  },
+  {
+    "index": 47,
+    "kanji": "以内",
+    "kana": "いない",
+    "translation": "в пределах, в течение, не свыше"
+  },
+  {
+    "index": 48,
+    "kanji": "田舎",
+    "kana": "いなか",
+    "translation": "деревня, сельская местность"
+  },
+  {
+    "index": 49,
+    "kanji": "祈る",
+    "kana": "いのる",
+    "translation": "молиться, желать (к-л ч-л)"
+  },
+  {
+    "index": 50,
+    "kanji": "",
+    "kana": "いらっしゃる",
+    "translation": "идти, приходить (вежл.)"
+  },
+  {
+    "index": 51,
+    "kanji": "員",
+    "kana": "いん",
+    "translation": "член (комитета и др.)"
+  },
+  {
+    "index": 52,
+    "kanji": "植える",
+    "kana": "うえる",
+    "translation": "сажать (растения), выращивать"
+  },
+  {
+    "index": 53,
+    "kanji": "伺う",
+    "kana": "うかがう",
+    "translation": "посещать, навещать, спрашивать, осведомляться"
+  },
+  {
+    "index": 54,
+    "kanji": "受付",
+    "kana": "うけつけ",
+    "translation": "приём, справочное бюро, регистратура"
+  },
+  {
+    "index": 55,
+    "kanji": "受ける",
+    "kana": "うける",
+    "translation": "получать, принимать"
+  },
+  {
+    "index": 56,
+    "kanji": "動く",
+    "kana": "うごく",
+    "translation": "двигаться, работать (о механизме)"
+  },
+  {
+    "index": 57,
+    "kanji": "嘘",
+    "kana": "うそ",
+    "translation": "неправда, ложь"
+  },
+  {
+    "index": 58,
+    "kanji": "内",
+    "kana": "うち",
+    "translation": "между, в течение, внутри"
+  },
+  {
+    "index": 59,
+    "kanji": "打つ",
+    "kana": "うつ",
+    "translation": "бить, ударять"
+  },
+  {
+    "index": 60,
+    "kanji": "美しい",
+    "kana": "うつくしい",
+    "translation": "красивый"
+  },
+  {
+    "index": 61,
+    "kanji": "写す",
+    "kana": "うつす",
+    "translation": "снимать копию, фотографировать"
+  },
+  {
+    "index": 62,
+    "kanji": "移る",
+    "kana": "うつる",
+    "translation": "переходить, переезжать, быть заразным"
+  },
+  {
+    "index": 63,
+    "kanji": "映る",
+    "kana": "うつる",
+    "translation": "отражаться (в зеркале)"
+  },
+  {
+    "index": 64,
+    "kanji": "腕",
+    "kana": "うで",
+    "translation": "рука (от плеча до запястья)"
+  },
+  {
+    "index": 65,
+    "kanji": "甘い",
+    "kana": "うまい",
+    "translation": "вкусный, умелый, ловкий"
+  },
+  {
+    "index": 66,
+    "kanji": "裏",
+    "kana": "うら",
+    "translation": "оборотная сторона, изнанка, задняя сторона, подкладка"
+  },
+  {
+    "index": 67,
+    "kanji": "売り場",
+    "kana": "うりば",
+    "translation": "касса, место продажи"
+  },
+  {
+    "index": 68,
+    "kanji": "煩い",
+    "kana": "うるさい",
+    "translation": "шумный, надоедливый, нудный, придирчивый"
+  },
+  {
+    "index": 69,
+    "kanji": "嬉しい",
+    "kana": "うれしい",
+    "translation": "радостный, веселый, приятный"
+  },
+  {
+    "index": 70,
+    "kanji": "",
+    "kana": "うん",
+    "translation": "угу, да"
+  },
+  {
+    "index": 72,
+    "kanji": "運転手",
+    "kana": "うんてんしゅ",
+    "translation": "водитель"
+  },
+  {
+    "index": 74,
+    "kanji": "",
+    "kana": "エスカレーター",
+    "translation": "эскалатор"
+  },
+  {
+    "index": 75,
+    "kanji": "枝",
+    "kana": "えだ",
+    "translation": "ветка"
+  },
+  {
+    "index": 76,
+    "kanji": "選ぶ",
+    "kana": "えらぶ",
+    "translation": "выбирать"
+  },
+  {
+    "index": 78,
+    "kanji": "お出でになる",
+    "kana": "おいでになる",
+    "translation": "направляться к-л"
+  },
+  {
+    "index": 79,
+    "kanji": "お祝い",
+    "kana": "おいわい",
+    "translation": "праздник, поздравление"
+  },
+  {
+    "index": 80,
+    "kanji": "応接間",
+    "kana": "おうせつま",
+    "translation": "приемная комната"
+  },
+  {
+    "index": 81,
+    "kanji": "多い",
+    "kana": "おおい",
+    "translation": "многочисленный, обильный, частый"
+  },
+  {
+    "index": 82,
+    "kanji": "大きな",
+    "kana": "おおきな",
+    "translation": "большой"
+  },
+  {
+    "index": 83,
+    "kanji": "",
+    "kana": "オートバイ",
+    "translation": "мотоцикл"
+  },
+  {
+    "index": 84,
+    "kanji": "",
+    "kana": "オーバー",
+    "translation": "пальто, преувеличение"
+  },
+  {
+    "index": 85,
+    "kanji": "御帰りなさい",
+    "kana": "おかえりなさい",
+    "translation": "с возвращением!"
+  },
+  {
+    "index": 86,
+    "kanji": "お蔭",
+    "kana": "おかげ",
+    "translation": "Вашими молитвами"
+  },
+  {
+    "index": 87,
+    "kanji": "お蔭様で",
+    "kana": "おかげさまで",
+    "translation": "слава богу, Вашими молитвами"
+  },
+  {
+    "index": 88,
+    "kanji": "可笑しい",
+    "kana": "おかしい",
+    "translation": "смешной, забавный, неуместный"
+  },
+  {
+    "index": 89,
+    "kanji": "置き",
+    "kana": "おき",
+    "translation": "через... с промежутками..."
+  },
+  {
+    "index": 90,
+    "kanji": "億",
+    "kana": "おく",
+    "translation": "сто миллионов"
+  },
+  {
+    "index": 91,
+    "kanji": "屋上",
+    "kana": "おくじょう",
+    "translation": "на крыше"
+  },
+  {
+    "index": 92,
+    "kanji": "贈り物",
+    "kana": "おくりもの",
+    "translation": "подарок"
+  },
+  {
+    "index": 93,
+    "kanji": "遅れる",
+    "kana": "おくれる",
+    "translation": "опаздывать"
+  },
+  {
+    "index": 94,
+    "kanji": "お子さん",
+    "kana": "おこさん",
+    "translation": "Ваш ребенок"
+  },
+  {
+    "index": 95,
+    "kanji": "起こす",
+    "kana": "おこす",
+    "translation": "будить, порождать, выкапывать из земли"
+  },
+  {
+    "index": 96,
+    "kanji": "行(な)う",
+    "kana": "おこなう",
+    "translation": "проводить, осуществлять, вести себя"
+  },
+  {
+    "index": 97,
+    "kanji": "怒る",
+    "kana": "おこる",
+    "translation": "сердиться"
+  },
+  {
+    "index": 98,
+    "kanji": "押(し)入れ",
+    "kana": "おしいれ",
+    "translation": "стенной шкаф"
+  },
+  {
+    "index": 99,
+    "kanji": "お嬢さん",
+    "kana": "おじょうさん",
+    "translation": "Ваша дочь"
+  },
+  {
+    "index": 100,
+    "kanji": "御大事に",
+    "kana": "おだいじに",
+    "translation": "Берегите себя!"
+  },
+  {
+    "index": 101,
+    "kanji": "お宅",
+    "kana": "おたく",
+    "translation": "Ваш дом"
+  },
+  {
+    "index": 102,
+    "kanji": "落ちる",
+    "kana": "おちる",
+    "translation": "падать, терпеть поражение, заходить (о солнце)"
+  },
+  {
+    "index": 103,
+    "kanji": "仰る",
+    "kana": "おっしゃる",
+    "translation": "говорить (вежл. о собеседнике)"
+  },
+  {
+    "index": 104,
+    "kanji": "音",
+    "kana": "おと",
+    "translation": "звук"
+  },
+  {
+    "index": 105,
+    "kanji": "落とす",
+    "kana": "おとす",
+    "translation": "ронять, понижать, уменьшать, упускать"
+  },
+  {
+    "index": 106,
+    "kanji": "踊り",
+    "kana": "おどり",
+    "translation": "танец"
+  },
+  {
+    "index": 107,
+    "kanji": "踊る",
+    "kana": "おどる",
+    "translation": "танцевать"
+  },
+  {
+    "index": 108,
+    "kanji": "驚く",
+    "kana": "おどろく",
+    "translation": "удивляться, пугаться"
+  },
+  {
+    "index": 109,
+    "kanji": "叔母",
+    "kana": "おば",
+    "translation": "тетя"
+  },
+  {
+    "index": 110,
+    "kanji": "お待たせしました",
+    "kana": "おまたせしました",
+    "translation": "извините, что заставил Вас ждать"
+  },
+  {
+    "index": 111,
+    "kanji": "御祭り",
+    "kana": "おまつり",
+    "translation": "праздник"
+  },
+  {
+    "index": 112,
+    "kanji": "御見舞い",
+    "kana": "おみまい",
+    "translation": "посещение больного, справлять о здоровье"
+  },
+  {
+    "index": 113,
+    "kanji": "御土産",
+    "kana": "おみやげ",
+    "translation": "сувенир, подарок"
+  },
+  {
+    "index": 115,
+    "kanji": "思い出す",
+    "kana": "おもいだす",
+    "translation": "вспоминать"
+  },
+  {
+    "index": 116,
+    "kanji": "思う",
+    "kana": "おもう",
+    "translation": "думать, считать, полагать, хотеть,собираться, заботиться"
+  },
+  {
+    "index": 117,
+    "kanji": "玩具",
+    "kana": "おもちゃ",
+    "translation": "игрушка"
+  },
+  {
+    "index": 118,
+    "kanji": "表",
+    "kana": "おもて",
+    "translation": "лицевая сторона, внешность,наружность, фасад"
+  },
+  {
+    "index": 119,
+    "kanji": "",
+    "kana": "おや",
+    "translation": "ой, ах, как, вот те на!"
+  },
+  {
+    "index": 120,
+    "kanji": "下りる",
+    "kana": "おりる",
+    "translation": "спускаться, сходить вниз"
+  },
+  {
+    "index": 121,
+    "kanji": "居る",
+    "kana": "おる",
+    "translation": "быть (вежл.)"
+  },
+  {
+    "index": 122,
+    "kanji": "御礼",
+    "kana": "おれい",
+    "translation": "поклон, вежливость, благодарность"
+  },
+  {
+    "index": 123,
+    "kanji": "折れる",
+    "kana": "おれる",
+    "translation": "ломаться, быть сломанным, поворачивать"
+  },
+  {
+    "index": 124,
+    "kanji": "終わり",
+    "kana": "おわり",
+    "translation": "конец"
+  },
+  {
+    "index": 125,
+    "kanji": "家",
+    "kana": "か",
+    "translation": "семья..."
+  },
+  {
+    "index": 126,
+    "kanji": "",
+    "kana": "カーテン",
+    "translation": "занавеска"
+  },
+  {
+    "index": 127,
+    "kanji": "会",
+    "kana": "かい",
+    "translation": "общество..., собрание..."
+  },
+  {
+    "index": 128,
+    "kanji": "海岸",
+    "kana": "かいがん",
+    "translation": "берег моря"
+  },
+  {
+    "index": 129,
+    "kanji": "会議",
+    "kana": "かいぎ",
+    "translation": "собрание, совещание, заседание,конференция"
+  },
+  {
+    "index": 130,
+    "kanji": "会場",
+    "kana": "かいじょう",
+    "translation": "концертный зал, зал заседаний"
+  },
+  {
+    "index": 131,
+    "kanji": "会話",
+    "kana": "かいわ",
+    "translation": "разговор, беседа, разговорная речь"
+  },
+  {
+    "index": 132,
+    "kanji": "帰り",
+    "kana": "かえり",
+    "translation": "возвращение"
+  },
+  {
+    "index": 133,
+    "kanji": "変える",
+    "kana": "かえる",
+    "translation": "менять, изменять"
+  },
+  {
+    "index": 134,
+    "kanji": "科学",
+    "kana": "かがく",
+    "translation": "наука"
+  },
+  {
+    "index": 135,
+    "kanji": "鏡",
+    "kana": "かがみ",
+    "translation": "зеркало"
+  },
+  {
+    "index": 136,
+    "kanji": "学部",
+    "kana": "がくぶ",
+    "translation": "факультет, кафедра"
+  },
+  {
+    "index": 137,
+    "kanji": "掛ける",
+    "kana": "かける",
+    "translation": "вешать, садиться, доставлять(беспокойство)"
+  },
+  {
+    "index": 138,
+    "kanji": "飾る",
+    "kana": "かざる",
+    "translation": "украшать, приукрашивать, демонстрировать"
+  },
+  {
+    "index": 139,
+    "kanji": "家事",
+    "kana": "かじ",
+    "translation": "домашние дела"
+  },
+  {
+    "index": 140,
+    "kanji": "畏まりました",
+    "kana": "かしこまりました",
+    "translation": "слушаюсь!"
+  },
+  {
+    "index": 141,
+    "kanji": "",
+    "kana": "ガソリン",
+    "translation": "бензин"
+  },
+  {
+    "index": 142,
+    "kanji": "",
+    "kana": "ガソリンスタンド",
+    "translation": "автозаправка"
+  },
+  {
+    "index": 143,
+    "kanji": "方",
+    "kana": "かた",
+    "translation": "способ..., манера..."
+  },
+  {
+    "index": 144,
+    "kanji": "形",
+    "kana": "かたち",
+    "translation": "форма, вид"
+  },
+  {
+    "index": 145,
+    "kanji": "片付ける",
+    "kana": "かたづける",
+    "translation": "приводить в порядок, убирать"
+  },
+  {
+    "index": 146,
+    "kanji": "勝つ",
+    "kana": "かつ",
+    "translation": "побеждать, выигрывать"
+  },
+  {
+    "index": 147,
+    "kanji": "格好",
+    "kana": "かっこう",
+    "translation": "внешний вид, облик, фигура"
+  },
+  {
+    "index": 148,
+    "kanji": "悲しい",
+    "kana": "かなしい",
+    "translation": "печальный, грустный"
+  },
+  {
+    "index": 149,
+    "kanji": "必ず",
+    "kana": "かならず",
+    "translation": "обязательно, непременно"
+  },
+  {
+    "index": 151,
+    "kanji": "彼女",
+    "kana": "かのじょ",
+    "translation": "она, любимая (разг.)"
+  },
+  {
+    "index": 152,
+    "kanji": "壁",
+    "kana": "かべ",
+    "translation": "стена"
+  },
+  {
+    "index": 153,
+    "kanji": "構いません",
+    "kana": "かまいません",
+    "translation": "всё равно, можно, не возражаю"
+  },
+  {
+    "index": 154,
+    "kanji": "髪",
+    "kana": "かみ",
+    "translation": "волосы"
+  },
+  {
+    "index": 155,
+    "kanji": "咬む",
+    "kana": "かむ",
+    "translation": "кусать, жевать"
+  },
+  {
+    "index": 156,
+    "kanji": "通う",
+    "kana": "かよう",
+    "translation": "ходить (туда и обратно), курсировать, посещать (школу)"
+  },
+  {
+    "index": 157,
+    "kanji": "",
+    "kana": "ガラス",
+    "translation": "стекло"
+  },
+  {
+    "index": 158,
+    "kanji": "彼",
+    "kana": "かれ",
+    "translation": "он, любимый (разг.)"
+  },
+  {
+    "index": 159,
+    "kanji": "彼等",
+    "kana": "かれら",
+    "translation": "они"
+  },
+  {
+    "index": 160,
+    "kanji": "乾く",
+    "kana": "かわく",
+    "translation": "сохнуть, высыхать"
+  },
+  {
+    "index": 162,
+    "kanji": "変わる",
+    "kana": "かわる",
+    "translation": "меняться, изменяться"
+  },
+  {
+    "index": 163,
+    "kanji": "考える",
+    "kana": "かんがえる",
+    "translation": "думать, размышлять, представлять себе, учитывать"
+  },
+  {
+    "index": 164,
+    "kanji": "関係",
+    "kana": "かんけい",
+    "translation": "отношения, связь, касательство"
+  },
+  {
+    "index": 165,
+    "kanji": "看護婦",
+    "kana": "かんごふ",
+    "translation": "медсестра"
+  },
+  {
+    "index": 166,
+    "kanji": "簡単",
+    "kana": "かんたん",
+    "translation": "простой, краткий"
+  },
+  {
+    "index": 167,
+    "kanji": "頑張る",
+    "kana": "がんばる",
+    "translation": "держаться (до конца), не сдаваться, упорствовать"
+  },
+  {
+    "index": 168,
+    "kanji": "気",
+    "kana": "き",
+    "translation": "запах, аромат, испарения, воздух"
+  },
+  {
+    "index": 169,
+    "kanji": "機会",
+    "kana": "きかい",
+    "translation": "шанс, (благоприятный) случай"
+  },
+  {
+    "index": 170,
+    "kanji": "機械",
+    "kana": "きかい",
+    "translation": "машина, механизм, установка, прибор"
+  },
+  {
+    "index": 171,
+    "kanji": "危険",
+    "kana": "きけん",
+    "translation": "опасность"
+  },
+  {
+    "index": 172,
+    "kanji": "聞こえる",
+    "kana": "きこえる",
+    "translation": "слышаться, звучать, казаться, производить впечатление, мочь слышать"
+  },
+  {
+    "index": 173,
+    "kanji": "汽車",
+    "kana": "きしゃ",
+    "translation": "поезд"
+  },
+  {
+    "index": 174,
+    "kanji": "技術",
+    "kana": "ぎじゅつ",
+    "translation": "технология, мастерство, техника"
+  },
+  {
+    "index": 175,
+    "kanji": "季節",
+    "kana": "きせつ",
+    "translation": "время года, сезон"
+  },
+  {
+    "index": 176,
+    "kanji": "規則",
+    "kana": "きそく",
+    "translation": "правило, распорядок, устав"
+  },
+  {
+    "index": 177,
+    "kanji": "屹度",
+    "kana": "きっと",
+    "translation": "непременно, обязательно"
+  },
+  {
+    "index": 178,
+    "kanji": "絹",
+    "kana": "きぬ",
+    "translation": "шелк"
+  },
+  {
+    "index": 179,
+    "kanji": "厳しい",
+    "kana": "きびしい",
+    "translation": "строгий, требовательный, трудный"
+  },
+  {
+    "index": 180,
+    "kanji": "気分",
+    "kana": "きぶん",
+    "translation": "самочувствие, настроение, расположение духа"
+  },
+  {
+    "index": 181,
+    "kanji": "決まる",
+    "kana": "きまる",
+    "translation": "быть решенным, определенным"
+  },
+  {
+    "index": 182,
+    "kanji": "君",
+    "kana": "きみ",
+    "translation": "ты (обращение мужчин к женщинам)"
+  },
+  {
+    "index": 183,
+    "kanji": "決める",
+    "kana": "きめる",
+    "translation": "решать, определять, устанавливать,назначать"
+  },
+  {
+    "index": 184,
+    "kanji": "気持ち",
+    "kana": "きもち",
+    "translation": "самочувствие, настроение, расположение духа"
+  },
+  {
+    "index": 185,
+    "kanji": "着物",
+    "kana": "きもの",
+    "translation": "кимоно"
+  },
+  {
+    "index": 186,
+    "kanji": "客",
+    "kana": "きゃく",
+    "translation": "гость, посетитель, клиент"
+  },
+  {
+    "index": 187,
+    "kanji": "急（に）",
+    "kana": "きゅう",
+    "translation": "спешный, срочный"
+  },
+  {
+    "index": 188,
+    "kanji": "急行",
+    "kana": "きゅうこう",
+    "translation": "экспресс (транспорт)"
+  },
+  {
+    "index": 189,
+    "kanji": "教育",
+    "kana": "きょういく",
+    "translation": "воспитание, образование, обучение"
+  },
+  {
+    "index": 190,
+    "kanji": "教会",
+    "kana": "きょうかい",
+    "translation": "церковь"
+  },
+  {
+    "index": 192,
+    "kanji": "興味",
+    "kana": "きょうみ",
+    "translation": "интерес, склонность"
+  },
+  {
+    "index": 193,
+    "kanji": "近所",
+    "kana": "きんじょ",
+    "translation": "близлежащая местность"
+  },
+  {
+    "index": 194,
+    "kanji": "具合",
+    "kana": "ぐあい",
+    "translation": "состояние, условия, состояние здоровья, образ действий"
+  },
+  {
+    "index": 195,
+    "kanji": "空気",
+    "kana": "くうき",
+    "translation": "воздух, атмосфера"
+  },
+  {
+    "index": 196,
+    "kanji": "空港",
+    "kana": "くうこう",
+    "translation": "аэропорт"
+  },
+  {
+    "index": 197,
+    "kanji": "草",
+    "kana": "くさ",
+    "translation": "трава"
+  },
+  {
+    "index": 198,
+    "kanji": "下さる",
+    "kana": "くださる",
+    "translation": "давать, дарить (вежл. о действиях 2 и 3лица)"
+  },
+  {
+    "index": 199,
+    "kanji": "首",
+    "kana": "くび",
+    "translation": "шея, голова"
+  },
+  {
+    "index": 200,
+    "kanji": "雲",
+    "kana": "くも",
+    "translation": "облако"
+  },
+  {
+    "index": 201,
+    "kanji": "比べる",
+    "kana": "くらべる",
+    "translation": "сравнивать, сопоставлять"
+  },
+  {
+    "index": 202,
+    "kanji": "呉れる",
+    "kana": "くれる",
+    "translation": "давать, дарить (о действиях 2 или 3лица в интересах 1 лица)"
+  },
+  {
+    "index": 203,
+    "kanji": "暮れる",
+    "kana": "くれる",
+    "translation": "подходить к концу (о времени), предаваться (размышлениям)"
+  },
+  {
+    "index": 204,
+    "kanji": "君",
+    "kana": "くん",
+    "translation": "суффикс имен и фамилий к равным или нижестоящему"
+  },
+  {
+    "index": 205,
+    "kanji": "毛",
+    "kana": "け",
+    "translation": "волосы, шерсть"
+  },
+  {
+    "index": 207,
+    "kanji": "警官",
+    "kana": "けいかん",
+    "translation": "полицейский"
+  },
+  {
+    "index": 209,
+    "kanji": "経済",
+    "kana": "けいざい",
+    "translation": "экономика"
+  },
+  {
+    "index": 210,
+    "kanji": "警察",
+    "kana": "けいさつ",
+    "translation": "полиция"
+  },
+  {
+    "index": 212,
+    "kanji": "景色",
+    "kana": "けしき",
+    "translation": "вид, пейзаж"
+  },
+  {
+    "index": 214,
+    "kanji": "決して",
+    "kana": "けっして",
+    "translation": "ни в коем случае, никогда"
+  },
+  {
+    "index": 215,
+    "kanji": "",
+    "kana": "けれども",
+    "translation": "однако, хотя, несмотря на то, что..."
+  },
+  {
+    "index": 216,
+    "kanji": "軒",
+    "kana": "けん",
+    "translation": "сч. суф. для зданий"
+  },
+  {
+    "index": 217,
+    "kanji": "原因",
+    "kana": "げんいん",
+    "translation": "причина"
+  },
+  {
+    "index": 220,
+    "kanji": "研究室",
+    "kana": "けんきゅうしつ",
+    "translation": "лаборатория"
+  },
+  {
+    "index": 222,
+    "kanji": "子",
+    "kana": "こ",
+    "translation": "ребенок"
+  },
+  {
+    "index": 223,
+    "kanji": "",
+    "kana": "こう",
+    "translation": "こう так, таким образом"
+  },
+  {
+    "index": 224,
+    "kanji": "郊外",
+    "kana": "こうがい",
+    "translation": "пригород"
+  },
+  {
+    "index": 225,
+    "kanji": "講義",
+    "kana": "こうぎ",
+    "translation": "лекция"
+  },
+  {
+    "index": 226,
+    "kanji": "工業",
+    "kana": "こうぎょう",
+    "translation": "промышленность, индустрия"
+  },
+  {
+    "index": 227,
+    "kanji": "高校",
+    "kana": "こうとうがっこう",
+    "translation": "старшая школа"
+  },
+  {
+    "index": 228,
+    "kanji": "高校生",
+    "kana": "こうこうせい",
+    "translation": "старшеклассник"
+  },
+  {
+    "index": 229,
+    "kanji": "工場",
+    "kana": "こうじょう",
+    "translation": "завод, фабрика, мастерская"
+  },
+  {
+    "index": 230,
+    "kanji": "校長",
+    "kana": "こうちょう",
+    "translation": "директор школы"
+  },
+  {
+    "index": 231,
+    "kanji": "交通",
+    "kana": "こうつう",
+    "translation": "сообщение, связь, движение"
+  },
+  {
+    "index": 232,
+    "kanji": "講堂",
+    "kana": "こうどう",
+    "translation": "лекционный зал"
+  },
+  {
+    "index": 233,
+    "kanji": "公務員",
+    "kana": "こうむいん",
+    "translation": "госслужащий, чиновник"
+  },
+  {
+    "index": 234,
+    "kanji": "国際",
+    "kana": "こくさい",
+    "translation": "международный"
+  },
+  {
+    "index": 235,
+    "kanji": "心",
+    "kana": "こころ",
+    "translation": "сердце, душа"
+  },
+  {
+    "index": 236,
+    "kanji": "御座居ます",
+    "kana": "ございます",
+    "translation": "быть (скромно о себе)"
+  },
+  {
+    "index": 238,
+    "kanji": "御存知",
+    "kana": "ごぞんじ",
+    "translation": "знать (вежл. о 2-3 лице)"
+  },
+  {
+    "index": 239,
+    "kanji": "答え",
+    "kana": "こたえ",
+    "translation": "ответ, решение (задачи)"
+  },
+  {
+    "index": 240,
+    "kanji": "御馳走",
+    "kana": "ごちそう",
+    "translation": "угощение (вежл.)"
+  },
+  {
+    "index": 241,
+    "kanji": "",
+    "kana": "こっち",
+    "translation": "здесь, тут (разг.)"
+  },
+  {
+    "index": 242,
+    "kanji": "事",
+    "kana": "こと",
+    "translation": "дело, обстоятельства, факт, случай"
+  },
+  {
+    "index": 243,
+    "kanji": "小鳥",
+    "kana": "ことり",
+    "translation": "птичка"
+  },
+  {
+    "index": 244,
+    "kanji": "この間",
+    "kana": "このあいだ",
+    "translation": "недавно, в последнее время"
+  },
+  {
+    "index": 245,
+    "kanji": "此の頃",
+    "kana": "このごろ",
+    "translation": "(в) последнее время"
+  },
+  {
+    "index": 246,
+    "kanji": "細かい",
+    "kana": "こまかい",
+    "translation": "мелкий, маленький, тщательный"
+  },
+  {
+    "index": 247,
+    "kanji": "塵",
+    "kana": "ごみ",
+    "translation": "сор, мусор, пыль"
+  },
+  {
+    "index": 248,
+    "kanji": "込む",
+    "kana": "こむ",
+    "translation": "быть людным (переполненным)"
+  },
+  {
+    "index": 249,
+    "kanji": "米",
+    "kana": "こめ",
+    "translation": "рис"
+  },
+  {
+    "index": 250,
+    "kanji": "御覧になる",
+    "kana": "ごらんになる",
+    "translation": "смотреть (вежл. о 2 и 3 лице)"
+  },
+  {
+    "index": 251,
+    "kanji": "此れから",
+    "kana": "これから",
+    "translation": "сейчас, теперь, отныне, впредь"
+  },
+  {
+    "index": 252,
+    "kanji": "怖い",
+    "kana": "こわい",
+    "translation": "страшный, жуткий, ужасный"
+  },
+  {
+    "index": 253,
+    "kanji": "壊す",
+    "kana": "こわす",
+    "translation": "ломать, разбивать, портить"
+  },
+  {
+    "index": 254,
+    "kanji": "壊れる",
+    "kana": "こわれる",
+    "translation": "ломаться, разбиваться"
+  },
+  {
+    "index": 255,
+    "kanji": "",
+    "kana": "コンサート",
+    "translation": "концерт"
+  },
+  {
+    "index": 256,
+    "kanji": "今度",
+    "kana": "こんど",
+    "translation": "(на) этот раз, недавно, (в) следующий раз"
+  },
+  {
+    "index": 257,
+    "kanji": "今夜",
+    "kana": "こんや",
+    "translation": "сегодня ночью"
+  },
+  {
+    "index": 258,
+    "kanji": "最近",
+    "kana": "さいきん",
+    "translation": "(в) последнее время"
+  },
+  {
+    "index": 259,
+    "kanji": "最後",
+    "kana": "さいご",
+    "translation": "конец, последний раз"
+  },
+  {
+    "index": 260,
+    "kanji": "最初",
+    "kana": "さいしょ",
+    "translation": "в начале, сперва"
+  },
+  {
+    "index": 261,
+    "kanji": "財布",
+    "kana": "さいふ",
+    "translation": "кошелек, бумажник"
+  },
+  {
+    "index": 262,
+    "kanji": "探す",
+    "kana": "さがす",
+    "translation": "искать, разыскивать"
+  },
+  {
+    "index": 263,
+    "kanji": "下がる",
+    "kana": "さがる",
+    "translation": "опускаться, падать, понижаться"
+  },
+  {
+    "index": 264,
+    "kanji": "盛ん",
+    "kana": "さかん",
+    "translation": "широко распространенный, модный, развитой"
+  },
+  {
+    "index": 265,
+    "kanji": "下げる",
+    "kana": "さげる",
+    "translation": "спускать, опускать, понижать, вешать, подвешивать, убирать"
+  },
+  {
+    "index": 266,
+    "kanji": "差し上げる",
+    "kana": "さしあげる",
+    "translation": "преподносить, дарить"
+  },
+  {
+    "index": 267,
+    "kanji": "",
+    "kana": "さっき",
+    "translation": "недавно, только что, ранее"
+  },
+  {
+    "index": 268,
+    "kanji": "寂しい",
+    "kana": "さびしい",
+    "translation": "грустный, унылый, печальный,безлюдный, пустынный"
+  },
+  {
+    "index": 269,
+    "kanji": "様",
+    "kana": "さま",
+    "translation": "суф вежливого обращения (господин,госпожа)"
+  },
+  {
+    "index": 270,
+    "kanji": "再来月",
+    "kana": "さらいげつ",
+    "translation": "через месяц"
+  },
+  {
+    "index": 271,
+    "kanji": "再来週",
+    "kana": "さらいしゅう",
+    "translation": "через неделю"
+  },
+  {
+    "index": 272,
+    "kanji": "騒ぐ",
+    "kana": "さわぐ",
+    "translation": "шуметь"
+  },
+  {
+    "index": 273,
+    "kanji": "触る",
+    "kana": "さわる",
+    "translation": "(при)касаться, трогать"
+  },
+  {
+    "index": 274,
+    "kanji": "",
+    "kana": "サンダル",
+    "translation": "сандалии"
+  },
+  {
+    "index": 275,
+    "kanji": "",
+    "kana": "サンドイッチ",
+    "translation": "бутерброд"
+  },
+  {
+    "index": 276,
+    "kanji": "残念",
+    "kana": "ざんねん",
+    "translation": "досадный, вызывающий сожаление"
+  },
+  {
+    "index": 277,
+    "kanji": "字",
+    "kana": "じ",
+    "translation": "буква, иероглиф, знак"
+  },
+  {
+    "index": 278,
+    "kanji": "試合",
+    "kana": "しあい",
+    "translation": "соревнование, матч, игра"
+  },
+  {
+    "index": 279,
+    "kanji": "仕方",
+    "kana": "しかた",
+    "translation": "способ, метод"
+  },
+  {
+    "index": 280,
+    "kanji": "叱る",
+    "kana": "しかる",
+    "translation": "бранить, ругать, упрекать"
+  },
+  {
+    "index": 281,
+    "kanji": "式",
+    "kana": "しき",
+    "translation": "стиль..., тип..., вид..."
+  },
+  {
+    "index": 282,
+    "kanji": "試験",
+    "kana": "しけん",
+    "translation": "экзамен, испытание, проверка"
+  },
+  {
+    "index": 283,
+    "kanji": "事故",
+    "kana": "じこ",
+    "translation": "происшествие, несчастный случай"
+  },
+  {
+    "index": 284,
+    "kanji": "地震",
+    "kana": "じしん",
+    "translation": "землетрясение"
+  },
+  {
+    "index": 285,
+    "kanji": "時代",
+    "kana": "じだい",
+    "translation": "время, времена, эпоха"
+  },
+  {
+    "index": 286,
+    "kanji": "下着",
+    "kana": "したぎ",
+    "translation": "нижнее белье"
+  },
+  {
+    "index": 288,
+    "kanji": "確り",
+    "kana": "しっかり",
+    "translation": "твердо, крепко, надежно (то)"
+  },
+  {
+    "index": 291,
+    "kanji": "辞典",
+    "kana": "じてん",
+    "translation": "словарь"
+  },
+  {
+    "index": 292,
+    "kanji": "品物",
+    "kana": "しなもの",
+    "translation": "товар"
+  },
+  {
+    "index": 293,
+    "kanji": "暫く",
+    "kana": "しばらく",
+    "translation": "(на) некоторое время, немного, долго, длительное время"
+  },
+  {
+    "index": 294,
+    "kanji": "島",
+    "kana": "しま",
+    "translation": "остров"
+  },
+  {
+    "index": 295,
+    "kanji": "事務所",
+    "kana": "じむしょ",
+    "translation": "контора, офис"
+  },
+  {
+    "index": 296,
+    "kanji": "社会",
+    "kana": "しゃかい",
+    "translation": "общество"
+  },
+  {
+    "index": 297,
+    "kanji": "社長",
+    "kana": "しゃちょう",
+    "translation": "начальник, директор"
+  },
+  {
+    "index": 298,
+    "kanji": "邪魔",
+    "kana": "じゃま",
+    "translation": "помеха, препятствие"
+  },
+  {
+    "index": 299,
+    "kanji": "",
+    "kana": "ジャム",
+    "translation": "джем"
+  },
+  {
+    "index": 300,
+    "kanji": "自由",
+    "kana": "じゆう",
+    "translation": "свобода"
+  },
+  {
+    "index": 301,
+    "kanji": "習慣",
+    "kana": "しゅうかん",
+    "translation": "обычай, привычка"
+  },
+  {
+    "index": 302,
+    "kanji": "住所",
+    "kana": "じゅうしょ",
+    "translation": "местожительство, адрес"
+  },
+  {
+    "index": 303,
+    "kanji": "柔道",
+    "kana": "じゅうどう",
+    "translation": "дзюдо (национальное боевое искусство)"
+  },
+  {
+    "index": 304,
+    "kanji": "十分",
+    "kana": "じゅうぶん",
+    "translation": "достаточный"
+  },
+  {
+    "index": 307,
+    "kanji": "趣味",
+    "kana": "しゅみ",
+    "translation": "вкус к ч-л, интерес, склонность, хобби"
+  },
+  {
+    "index": 310,
+    "kanji": "正月",
+    "kana": "しょうがつ",
+    "translation": "Новый Год, январь"
+  },
+  {
+    "index": 311,
+    "kanji": "小学校",
+    "kana": "しょうがっこう",
+    "translation": "начальная школа"
+  },
+  {
+    "index": 312,
+    "kanji": "小説",
+    "kana": "しょうせつ",
+    "translation": "роман, повесть, рассказ,художественная литература"
+  },
+  {
+    "index": 315,
+    "kanji": "将来",
+    "kana": "しょうらい",
+    "translation": "будущее, грядущее"
+  },
+  {
+    "index": 318,
+    "kanji": "女性",
+    "kana": "じょせい",
+    "translation": "женский пол, женщина, женский род"
+  },
+  {
+    "index": 319,
+    "kanji": "知らせる",
+    "kana": "しらせる",
+    "translation": "извещать, ставить в известность"
+  },
+  {
+    "index": 320,
+    "kanji": "調べる",
+    "kana": "しらべる",
+    "translation": "расследовать, исследовать, проверять,смотреть в словаре"
+  },
+  {
+    "index": 321,
+    "kanji": "人口",
+    "kana": "じんこう",
+    "translation": "население, численность населения"
+  },
+  {
+    "index": 322,
+    "kanji": "神社",
+    "kana": "じんじゃ",
+    "translation": "синтоистское святилище"
+  },
+  {
+    "index": 323,
+    "kanji": "親切",
+    "kana": "しんせつ",
+    "translation": "сердечный, добрый"
+  },
+  {
+    "index": 325,
+    "kanji": "新聞社",
+    "kana": "しんぶんしゃ",
+    "translation": "газетное издательство"
+  },
+  {
+    "index": 326,
+    "kanji": "水泳",
+    "kana": "すいえい",
+    "translation": "плавание"
+  },
+  {
+    "index": 327,
+    "kanji": "水道",
+    "kana": "すいどう",
+    "translation": "водопровод"
+  },
+  {
+    "index": 328,
+    "kanji": "随分",
+    "kana": "ずいぶん",
+    "translation": "очень, весьма, довольно-таки"
+  },
+  {
+    "index": 329,
+    "kanji": "数学",
+    "kana": "すうがく",
+    "translation": "математика"
+  },
+  {
+    "index": 330,
+    "kanji": "",
+    "kana": "スーツケース",
+    "translation": "чемодан, дорожная сумка"
+  },
+  {
+    "index": 331,
+    "kanji": "過ぎる",
+    "kana": "すぎる",
+    "translation": "проходить мимо, проходить (о времени), истекать, превышать"
+  },
+  {
+    "index": 332,
+    "kanji": "過ぎる",
+    "kana": "すぎる",
+    "translation": "чрезмерно, чересчур, слишком"
+  },
+  {
+    "index": 333,
+    "kanji": "空く",
+    "kana": "すく",
+    "translation": "быть пустым, свободным, проголодаться"
+  },
+  {
+    "index": 334,
+    "kanji": "少ない",
+    "kana": "すくない",
+    "translation": "мало, немного, малочисленный"
+  },
+  {
+    "index": 335,
+    "kanji": "直ぐに",
+    "kana": "すぐに",
+    "translation": "сразу, немедленно, скоро"
+  },
+  {
+    "index": 336,
+    "kanji": "",
+    "kana": "スクリーン",
+    "translation": "экран"
+  },
+  {
+    "index": 337,
+    "kanji": "凄い",
+    "kana": "すごい",
+    "translation": "страшный, ужасный, поразительный, удивительный, круто!"
+  },
+  {
+    "index": 338,
+    "kanji": "",
+    "kana": "すっかり",
+    "translation": "совсем, совершенно, полностью"
+  },
+  {
+    "index": 339,
+    "kanji": "",
+    "kana": "ずっと",
+    "translation": "гораздо, больше, дальше, все время, постоянно"
+  },
+  {
+    "index": 340,
+    "kanji": "捨てる",
+    "kana": "すてる",
+    "translation": "бросать, выбрасывать, забрасывать"
+  },
+  {
+    "index": 341,
+    "kanji": "",
+    "kana": "ステレオ",
+    "translation": "стерео"
+  },
+  {
+    "index": 342,
+    "kanji": "砂",
+    "kana": "すな",
+    "translation": "песок, песчинка"
+  },
+  {
+    "index": 343,
+    "kanji": "素晴らしい",
+    "kana": "すばらしい",
+    "translation": "замечательный, великолепный,изумительный"
+  },
+  {
+    "index": 344,
+    "kanji": "滑る",
+    "kana": "すべる",
+    "translation": "скользить, быть скользким, кататься на коньках"
+  },
+  {
+    "index": 345,
+    "kanji": "隅",
+    "kana": "すみ",
+    "translation": "угол (внутренний)"
+  },
+  {
+    "index": 346,
+    "kanji": "済む",
+    "kana": "すむ",
+    "translation": "оканчиваться, обходиться, улаживаться"
+  },
+  {
+    "index": 347,
+    "kanji": "掏摸",
+    "kana": "すり",
+    "translation": "карманник, воришка, мелкое воровство"
+  },
+  {
+    "index": 348,
+    "kanji": "",
+    "kana": "すると",
+    "translation": "ну, значит, и вот..."
+  },
+  {
+    "index": 349,
+    "kanji": "製",
+    "kana": "せい",
+    "translation": "сделано в..."
+  },
+  {
+    "index": 351,
+    "kanji": "政治",
+    "kana": "せいじ",
+    "translation": "политика"
+  },
+  {
+    "index": 352,
+    "kanji": "西洋",
+    "kana": "せいよう",
+    "translation": "Запад"
+  },
+  {
+    "index": 353,
+    "kanji": "世界",
+    "kana": "せかい",
+    "translation": "мир, свет"
+  },
+  {
+    "index": 354,
+    "kanji": "席",
+    "kana": "せき",
+    "translation": "место"
+  },
+  {
+    "index": 355,
+    "kanji": "説明",
+    "kana": "せつめい",
+    "translation": "объяснение"
+  },
+  {
+    "index": 356,
+    "kanji": "背中",
+    "kana": "せなか",
+    "translation": "спина"
+  },
+  {
+    "index": 357,
+    "kanji": "是非",
+    "kana": "ぜひ",
+    "translation": "непременно, обязательно, во что бы тони стало"
+  },
+  {
+    "index": 359,
+    "kanji": "線",
+    "kana": "せん",
+    "translation": "линия"
+  },
+  {
+    "index": 360,
+    "kanji": "全然",
+    "kana": "ぜんぜん",
+    "translation": "совсем, совершенно, нисколько (с отриц.)"
+  },
+  {
+    "index": 362,
+    "kanji": "先輩",
+    "kana": "せんぱい",
+    "translation": "старший товарищ (в школе, на работе)"
+  },
+  {
+    "index": 363,
+    "kanji": "専門",
+    "kana": "せんもん",
+    "translation": "специальность"
+  },
+  {
+    "index": 364,
+    "kanji": "",
+    "kana": "そう",
+    "translation": "так, таким образом"
+  },
+  {
+    "index": 366,
+    "kanji": "育てる",
+    "kana": "そだてる",
+    "translation": "растить, воспитывать"
+  },
+  {
+    "index": 368,
+    "kanji": "祖父",
+    "kana": "そふ",
+    "translation": "дедушка"
+  },
+  {
+    "index": 369,
+    "kanji": "祖母",
+    "kana": "そぼ",
+    "translation": "бабушка"
+  },
+  {
+    "index": 370,
+    "kanji": "其れで",
+    "kana": "それで",
+    "translation": "поэтому, из-за этого"
+  },
+  {
+    "index": 371,
+    "kanji": "其れに",
+    "kana": "それに",
+    "translation": "к тому же..."
+  },
+  {
+    "index": 372,
+    "kanji": "",
+    "kana": "それはいけませんね",
+    "translation": "так нельзя, так не пойдет, нехорошо"
+  },
+  {
+    "index": 373,
+    "kanji": "其れ程",
+    "kana": "それほど",
+    "translation": "в такой степени"
+  },
+  {
+    "index": 374,
+    "kanji": "徐々",
+    "kana": "そろそろ",
+    "translation": "потихоньку, скоро"
+  },
+  {
+    "index": 375,
+    "kanji": "",
+    "kana": "そんな",
+    "translation": "такой"
+  },
+  {
+    "index": 376,
+    "kanji": "",
+    "kana": "そんなに",
+    "translation": "так"
+  },
+  {
+    "index": 377,
+    "kanji": "代",
+    "kana": "だい",
+    "translation": "суф платы за ч-л"
+  },
+  {
+    "index": 379,
+    "kanji": "大学生",
+    "kana": "だいがくせい",
+    "translation": "студент"
+  },
+  {
+    "index": 380,
+    "kanji": "大事",
+    "kana": "だいじ",
+    "translation": "важный"
+  },
+  {
+    "index": 381,
+    "kanji": "大体",
+    "kana": "だいたい",
+    "translation": "в общем, в основном, в целом"
+  },
+  {
+    "index": 382,
+    "kanji": "",
+    "kana": "タイプ",
+    "translation": "тип"
+  },
+  {
+    "index": 383,
+    "kanji": "大分",
+    "kana": "だいぶ",
+    "translation": "(довольно) много, очень, весьма,значительно"
+  },
+  {
+    "index": 384,
+    "kanji": "台風",
+    "kana": "たいふう",
+    "translation": "тайфун"
+  },
+  {
+    "index": 385,
+    "kanji": "倒れる",
+    "kana": "たおれる",
+    "translation": "падать, опрокидываться"
+  },
+  {
+    "index": 386,
+    "kanji": "",
+    "kana": "だから",
+    "translation": "поэтому"
+  },
+  {
+    "index": 387,
+    "kanji": "確か",
+    "kana": "たしか",
+    "translation": "достоверный, несомненный,наверняка, точно"
+  },
+  {
+    "index": 388,
+    "kanji": "足す",
+    "kana": "たす",
+    "translation": "прибавлять, добавлять"
+  },
+  {
+    "index": 389,
+    "kanji": "出す",
+    "kana": "だす",
+    "translation": "неожиданно начинать делать ч-л"
+  },
+  {
+    "index": 390,
+    "kanji": "訪ねる",
+    "kana": "たずねる",
+    "translation": "посещать, навещать"
+  },
+  {
+    "index": 391,
+    "kanji": "尋ねる",
+    "kana": "たずねる",
+    "translation": "спрашивать, разыскивать"
+  },
+  {
+    "index": 392,
+    "kanji": "只今",
+    "kana": "ただいま",
+    "translation": "сейчас, только что, я дома! Я вернулся!"
+  },
+  {
+    "index": 393,
+    "kanji": "正しい",
+    "kana": "ただしい",
+    "translation": "правильный, честный"
+  },
+  {
+    "index": 394,
+    "kanji": "畳",
+    "kana": "たたみ",
+    "translation": "циновка татами"
+  },
+  {
+    "index": 395,
+    "kanji": "立てる",
+    "kana": "たてる",
+    "translation": "ставить, составлять"
+  },
+  {
+    "index": 396,
+    "kanji": "建てる",
+    "kana": "たてる",
+    "translation": "строить"
+  },
+  {
+    "index": 397,
+    "kanji": "例えば",
+    "kana": "たとえば",
+    "translation": "например"
+  },
+  {
+    "index": 398,
+    "kanji": "棚",
+    "kana": "たな",
+    "translation": "полка"
+  },
+  {
+    "index": 399,
+    "kanji": "楽しみ",
+    "kana": "たのしみ",
+    "translation": "удовольствие"
+  },
+  {
+    "index": 400,
+    "kanji": "偶に",
+    "kana": "たまに",
+    "translation": "изредка, редко"
+  },
+  {
+    "index": 401,
+    "kanji": "為",
+    "kana": "ため",
+    "translation": "для, из-за"
+  },
+  {
+    "index": 402,
+    "kanji": "駄目",
+    "kana": "だめ",
+    "translation": "непригодный, неудачный, напрасный,нельзя"
+  },
+  {
+    "index": 403,
+    "kanji": "足りる",
+    "kana": "たりる",
+    "translation": "хватать, быть достаточным"
+  },
+  {
+    "index": 404,
+    "kanji": "男性",
+    "kana": "だんせい",
+    "translation": "мужской пол"
+  },
+  {
+    "index": 405,
+    "kanji": "暖房",
+    "kana": "だんぼう",
+    "translation": "отопление"
+  },
+  {
+    "index": 406,
+    "kanji": "血",
+    "kana": "ち",
+    "translation": "кровь"
+  },
+  {
+    "index": 407,
+    "kanji": "小さな",
+    "kana": "ちいさな",
+    "translation": "маленький"
+  },
+  {
+    "index": 408,
+    "kanji": "力",
+    "kana": "ちから",
+    "translation": "сила, энергия"
+  },
+  {
+    "index": 409,
+    "kanji": "",
+    "kana": "ちっとも",
+    "translation": "нисколько, ничуть (с отриц.)"
+  },
+  {
+    "index": 410,
+    "kanji": "",
+    "kana": "ちゃん",
+    "translation": "ちゃん ласковый суффикс к именам"
+  },
+  {
+    "index": 412,
+    "kanji": "中学校",
+    "kana": "ちゅうがっこう",
+    "translation": "средняя школа"
+  },
+  {
+    "index": 414,
+    "kanji": "駐車場",
+    "kana": "ちゅうしゃじょう",
+    "translation": "стоянка, парковка"
+  },
+  {
+    "index": 415,
+    "kanji": "地理",
+    "kana": "ちり",
+    "translation": "география"
+  },
+  {
+    "index": 416,
+    "kanji": "捕まえる",
+    "kana": "つかまえる",
+    "translation": "схватить, арестовать, задержать"
+  },
+  {
+    "index": 417,
+    "kanji": "月",
+    "kana": "つき",
+    "translation": "луна, месяц"
+  },
+  {
+    "index": 418,
+    "kanji": "点く",
+    "kana": "つく",
+    "translation": "зажигаться, загораться"
+  },
+  {
+    "index": 419,
+    "kanji": "付ける",
+    "kana": "つける",
+    "translation": "прикреплять, накладывать, посыпать, поливать, следить за к-л"
+  },
+  {
+    "index": 420,
+    "kanji": "漬ける",
+    "kana": "つける",
+    "translation": "солить, мариновать"
+  },
+  {
+    "index": 421,
+    "kanji": "都合",
+    "kana": "つごう",
+    "translation": "обстоятельство, условия, причина, удобство"
+  },
+  {
+    "index": 422,
+    "kanji": "伝える",
+    "kana": "つたえる",
+    "translation": "передавать (информацию)"
+  },
+  {
+    "index": 423,
+    "kanji": "続く",
+    "kana": "つづく",
+    "translation": "продолжаться, следовать"
+  },
+  {
+    "index": 424,
+    "kanji": "続ける",
+    "kana": "つづける",
+    "translation": "продолжать"
+  },
+  {
+    "index": 425,
+    "kanji": "包む",
+    "kana": "つつむ",
+    "translation": "обертывать, заворачивать, покрывать"
+  },
+  {
+    "index": 426,
+    "kanji": "妻",
+    "kana": "つま",
+    "translation": "жена"
+  },
+  {
+    "index": 427,
+    "kanji": "爪",
+    "kana": "つめ",
+    "translation": "ногти, когти, копыто, клешня"
+  },
+  {
+    "index": 428,
+    "kanji": "積もり",
+    "kana": "つもり",
+    "translation": "намерение, цель, расчет"
+  },
+  {
+    "index": 429,
+    "kanji": "積もる",
+    "kana": "つもる",
+    "translation": "накапливаться, лежать (о снеге), рассчитывать, прикидывать"
+  },
+  {
+    "index": 430,
+    "kanji": "釣る",
+    "kana": "つる",
+    "translation": "ловить рыбу, заманивать"
+  },
+  {
+    "index": 431,
+    "kanji": "連れる",
+    "kana": "つれる",
+    "translation": "брать с собой"
+  },
+  {
+    "index": 432,
+    "kanji": "丁寧",
+    "kana": "ていねい",
+    "translation": "вежливый"
+  },
+  {
+    "index": 433,
+    "kanji": "",
+    "kana": "テキスト",
+    "translation": "текст"
+  },
+  {
+    "index": 434,
+    "kanji": "適当",
+    "kana": "てきとう",
+    "translation": "подходящий, уместный"
+  },
+  {
+    "index": 435,
+    "kanji": "出来る",
+    "kana": "できる",
+    "translation": "быть возможным, мочь, быть сделанным, появляться"
+  },
+  {
+    "index": 436,
+    "kanji": "出来るだけ",
+    "kana": "できるだけ",
+    "translation": "насколько возможно, по мере возможности"
+  },
+  {
+    "index": 437,
+    "kanji": "手伝う",
+    "kana": "てつだう",
+    "translation": "помогать в ч-л"
+  },
+  {
+    "index": 438,
+    "kanji": "",
+    "kana": "テニスコート",
+    "translation": "теннисный корт"
+  },
+  {
+    "index": 439,
+    "kanji": "手袋",
+    "kana": "てぶくろ",
+    "translation": "перчатки"
+  },
+  {
+    "index": 440,
+    "kanji": "手前",
+    "kana": "てまえ",
+    "translation": "эта сторона, перед..., Я (скромно), ты(грубо)"
+  },
+  {
+    "index": 441,
+    "kanji": "手元",
+    "kana": "てもと",
+    "translation": "под рукой, вблизи, при себе"
+  },
+  {
+    "index": 442,
+    "kanji": "寺",
+    "kana": "てら",
+    "translation": "буддийский храм"
+  },
+  {
+    "index": 443,
+    "kanji": "点",
+    "kana": "てん",
+    "translation": "точка, балл, пятно, дефект, пункт"
+  },
+  {
+    "index": 444,
+    "kanji": "店員",
+    "kana": "てんいん",
+    "translation": "продавец"
+  },
+  {
+    "index": 445,
+    "kanji": "天気予報",
+    "kana": "てんきよほう",
+    "translation": "прогноз погоды"
+  },
+  {
+    "index": 446,
+    "kanji": "電灯",
+    "kana": "でんとう",
+    "translation": "электрический свет (лампы)"
+  },
+  {
+    "index": 447,
+    "kanji": "電報",
+    "kana": "でんぽう",
+    "translation": "телеграмма"
+  },
+  {
+    "index": 448,
+    "kanji": "展覧会",
+    "kana": "てんらんかい",
+    "translation": "выставка"
+  },
+  {
+    "index": 449,
+    "kanji": "道具",
+    "kana": "どうぐ",
+    "translation": "инструменты, принадлежности"
+  },
+  {
+    "index": 450,
+    "kanji": "",
+    "kana": "とうとう",
+    "translation": "и так далее, и тому подобное, и другие"
+  },
+  {
+    "index": 451,
+    "kanji": "動物園",
+    "kana": "どうぶつえん",
+    "translation": "зоопарк"
+  },
+  {
+    "index": 452,
+    "kanji": "遠く",
+    "kana": "とおく",
+    "translation": "далеко"
+  },
+  {
+    "index": 453,
+    "kanji": "通り",
+    "kana": "とおり",
+    "translation": "улица, дорога, проезд"
+  },
+  {
+    "index": 454,
+    "kanji": "通る",
+    "kana": "とおる",
+    "translation": "проходить, проезжать, пронизывать"
+  },
+  {
+    "index": 455,
+    "kanji": "時",
+    "kana": "とき",
+    "translation": "когда..."
+  },
+  {
+    "index": 456,
+    "kanji": "特に",
+    "kana": "とくに",
+    "translation": "особенно, в особенности, в частности"
+  },
+  {
+    "index": 457,
+    "kanji": "特別",
+    "kana": "とくべつ",
+    "translation": "особенный, специальный,исключительный"
+  },
+  {
+    "index": 458,
+    "kanji": "床屋",
+    "kana": "とこや",
+    "translation": "парикмахер, парикмахерская"
+  },
+  {
+    "index": 459,
+    "kanji": "年",
+    "kana": "とし",
+    "translation": "год, возраст"
+  },
+  {
+    "index": 460,
+    "kanji": "途中",
+    "kana": "とちゅう",
+    "translation": "по пути, по дороге"
+  },
+  {
+    "index": 461,
+    "kanji": "特急",
+    "kana": "とっきゅう",
+    "translation": "экспресс (поезд)"
+  },
+  {
+    "index": 462,
+    "kanji": "何方",
+    "kana": "どっち",
+    "translation": "где, который, кто (разг.)"
+  },
+  {
+    "index": 463,
+    "kanji": "届ける",
+    "kana": "とどける",
+    "translation": "доставлять, заявлять, уведомлять"
+  },
+  {
+    "index": 464,
+    "kanji": "泊まる",
+    "kana": "とまる",
+    "translation": "оставаться на ночь"
+  },
+  {
+    "index": 465,
+    "kanji": "止める",
+    "kana": "とめる",
+    "translation": "останавливать"
+  },
+  {
+    "index": 466,
+    "kanji": "取り替える",
+    "kana": "とりかえる",
+    "translation": "менять, заменять, обменивать"
+  },
+  {
+    "index": 467,
+    "kanji": "泥棒",
+    "kana": "どろぼう",
+    "translation": "вор, воровство"
+  },
+  {
+    "index": 468,
+    "kanji": "直す",
+    "kana": "なおす",
+    "translation": "лечить, чинить, исправлять"
+  },
+  {
+    "index": 469,
+    "kanji": "直る",
+    "kana": "なおる",
+    "translation": "поправляться, исправляться,выздоравливать"
+  },
+  {
+    "index": 470,
+    "kanji": "治る",
+    "kana": "なおる",
+    "translation": "поправляться, исправляться,выздоравливать"
+  },
+  {
+    "index": 471,
+    "kanji": "中々",
+    "kana": "なかなか",
+    "translation": "весьма, очень, с отриц никак"
+  },
+  {
+    "index": 472,
+    "kanji": "泣く",
+    "kana": "なく",
+    "translation": "плакать"
+  },
+  {
+    "index": 473,
+    "kanji": "無くす",
+    "kana": "なくす",
+    "translation": "лишаться, терять"
+  },
+  {
+    "index": 474,
+    "kanji": "無くなる",
+    "kana": "なくなる",
+    "translation": "кончаться, быть потерянным"
+  },
+  {
+    "index": 475,
+    "kanji": "亡くなる",
+    "kana": "なくなる",
+    "translation": "умирать, скончаться"
+  },
+  {
+    "index": 476,
+    "kanji": "投げる",
+    "kana": "なげる",
+    "translation": "бросать, кидать, швырять"
+  },
+  {
+    "index": 477,
+    "kanji": "為さる",
+    "kana": "なさる",
+    "translation": "делать"
+  },
+  {
+    "index": 478,
+    "kanji": "何故",
+    "kana": "なぜ",
+    "translation": "почему?"
+  },
+  {
+    "index": 479,
+    "kanji": "鳴る",
+    "kana": "なる",
+    "translation": "звучать, быть широко известным"
+  },
+  {
+    "index": 480,
+    "kanji": "成るべく",
+    "kana": "なるべく",
+    "translation": "по возможности, насколько возможно"
+  },
+  {
+    "index": 481,
+    "kanji": "成程",
+    "kana": "なるほど",
+    "translation": "в самом деле, действительно, и впрямь"
+  },
+  {
+    "index": 482,
+    "kanji": "慣れる",
+    "kana": "なれる",
+    "translation": "привыкать, приучаться"
+  },
+  {
+    "index": 483,
+    "kanji": "匂い",
+    "kana": "におい",
+    "translation": "запах, аромат"
+  },
+  {
+    "index": 484,
+    "kanji": "苦い",
+    "kana": "にがい",
+    "translation": "горький"
+  },
+  {
+    "index": 485,
+    "kanji": "難い",
+    "kana": "にくい",
+    "translation": "трудно..."
+  },
+  {
+    "index": 486,
+    "kanji": "逃げる",
+    "kana": "にげる",
+    "translation": "убежать, бежать, избегать"
+  },
+  {
+    "index": 487,
+    "kanji": "日記",
+    "kana": "にっき",
+    "translation": "дневник"
+  },
+  {
+    "index": 490,
+    "kanji": "似る",
+    "kana": "にる",
+    "translation": "быть похожим"
+  },
+  {
+    "index": 491,
+    "kanji": "人形",
+    "kana": "にんぎょう",
+    "translation": "кукла"
+  },
+  {
+    "index": 492,
+    "kanji": "盗む",
+    "kana": "ぬすむ",
+    "translation": "воровать"
+  },
+  {
+    "index": 493,
+    "kanji": "塗る",
+    "kana": "ぬる",
+    "translation": "красить, мазать, штукатурить"
+  },
+  {
+    "index": 494,
+    "kanji": "濡れる",
+    "kana": "ぬれる",
+    "translation": "промокать, намокать"
+  },
+  {
+    "index": 495,
+    "kanji": "値段",
+    "kana": "ねだん",
+    "translation": "цена, стоимость"
+  },
+  {
+    "index": 496,
+    "kanji": "熱",
+    "kana": "ねつ",
+    "translation": "жар, пыл, температура, горячность,страсть"
+  },
+  {
+    "index": 497,
+    "kanji": "熱心",
+    "kana": "ねっしん",
+    "translation": "пыл, рвение, энтузиазм"
+  },
+  {
+    "index": 498,
+    "kanji": "眠い",
+    "kana": "ねむい",
+    "translation": "сонный"
+  },
+  {
+    "index": 499,
+    "kanji": "眠る",
+    "kana": "ねむる",
+    "translation": "спать"
+  },
+  {
+    "index": 500,
+    "kanji": "残る",
+    "kana": "のこる",
+    "translation": "оставаться, сохраняться"
+  },
+  {
+    "index": 501,
+    "kanji": "喉",
+    "kana": "のど",
+    "translation": "горло"
+  },
+  {
+    "index": 502,
+    "kanji": "乗り換える",
+    "kana": "のりかえる",
+    "translation": "пересаживаться"
+  },
+  {
+    "index": 503,
+    "kanji": "乗り物",
+    "kana": "のりもの",
+    "translation": "транспортное средство"
+  },
+  {
+    "index": 504,
+    "kanji": "葉",
+    "kana": "は",
+    "translation": "лист, листва"
+  },
+  {
+    "index": 505,
+    "kanji": "場合",
+    "kana": "ばあい",
+    "translation": "случай, обстоятельства"
+  },
+  {
+    "index": 506,
+    "kanji": "倍",
+    "kana": "ばい",
+    "translation": "удвоенный, с числом в ...раз"
+  },
+  {
+    "index": 508,
+    "kanji": "歯医者",
+    "kana": "はいしゃ",
+    "translation": "стоматолог, зубной врач"
+  },
+  {
+    "index": 509,
+    "kanji": "",
+    "kana": "ばかり",
+    "translation": "(суф. числ.) примерно, около"
+  },
+  {
+    "index": 510,
+    "kanji": "運ぶ",
+    "kana": "はこぶ",
+    "translation": "перевозить, продвигаться вперед"
+  },
+  {
+    "index": 511,
+    "kanji": "始める",
+    "kana": "はじめる",
+    "translation": "начинать"
+  },
+  {
+    "index": 512,
+    "kanji": "筈",
+    "kana": "はず",
+    "translation": "должен, должно быть"
+  },
+  {
+    "index": 513,
+    "kanji": "恥ずかしい",
+    "kana": "はずかしい",
+    "translation": "стыдно"
+  },
+  {
+    "index": 514,
+    "kanji": "発音",
+    "kana": "はつおん",
+    "translation": "произношение"
+  },
+  {
+    "index": 515,
+    "kanji": "",
+    "kana": "はっきり",
+    "translation": "ясно, отчетливо"
+  },
+  {
+    "index": 516,
+    "kanji": "花見",
+    "kana": "はなみ",
+    "translation": "любование цветами"
+  },
+  {
+    "index": 517,
+    "kanji": "払う",
+    "kana": "はらう",
+    "translation": "платить"
+  },
+  {
+    "index": 518,
+    "kanji": "番組",
+    "kana": "ばんぐみ",
+    "translation": "телепередача"
+  },
+  {
+    "index": 519,
+    "kanji": "反対",
+    "kana": "はんたい",
+    "translation": "протест, контраст, противоположность"
+  },
+  {
+    "index": 520,
+    "kanji": "火",
+    "kana": "ひ",
+    "translation": "огонь"
+  },
+  {
+    "index": 521,
+    "kanji": "日",
+    "kana": "ひ",
+    "translation": "солнце, день"
+  },
+  {
+    "index": 522,
+    "kanji": "冷える",
+    "kana": "ひえる",
+    "translation": "остывать, зябнуть, мерзнуть"
+  },
+  {
+    "index": 523,
+    "kanji": "引き出し",
+    "kana": "ひきだし",
+    "translation": "выдвижной ящик"
+  },
+  {
+    "index": 524,
+    "kanji": "髭",
+    "kana": "ひげ",
+    "translation": "усы, борода"
+  },
+  {
+    "index": 525,
+    "kanji": "飛行場",
+    "kana": "ひこうじょう",
+    "translation": "аэродром"
+  },
+  {
+    "index": 526,
+    "kanji": "久し振り",
+    "kana": "ひさしぶり",
+    "translation": "спустя долгое время"
+  },
+  {
+    "index": 527,
+    "kanji": "美術館",
+    "kana": "びじゅつかん",
+    "translation": "музей изобразительных искусств"
+  },
+  {
+    "index": 528,
+    "kanji": "非常に",
+    "kana": "ひじょうに",
+    "translation": "чрезвычайно, необыкновенно"
+  },
+  {
+    "index": 529,
+    "kanji": "吃驚する",
+    "kana": "びっくりする",
+    "translation": "изумляться, быть испуганным"
+  },
+  {
+    "index": 530,
+    "kanji": "引っ越す",
+    "kana": "ひっこす",
+    "translation": "переезжать"
+  },
+  {
+    "index": 531,
+    "kanji": "必要",
+    "kana": "ひつよう",
+    "translation": "необходимость"
+  },
+  {
+    "index": 532,
+    "kanji": "酷い",
+    "kana": "ひどい",
+    "translation": "жестокий, несправедливый, ужасный"
+  },
+  {
+    "index": 533,
+    "kanji": "開く",
+    "kana": "ひらく",
+    "translation": "открывать, учреждать, основывать, осваивать"
+  },
+  {
+    "index": 534,
+    "kanji": "",
+    "kana": "ビル",
+    "translation": "здание"
+  },
+  {
+    "index": 535,
+    "kanji": "昼間",
+    "kana": "ひるま",
+    "translation": "дневное время, днём"
+  },
+  {
+    "index": 536,
+    "kanji": "昼休み",
+    "kana": "ひるやすみ",
+    "translation": "перерыв на обед"
+  },
+  {
+    "index": 537,
+    "kanji": "拾う",
+    "kana": "ひろう",
+    "translation": "находить, подбирать"
+  },
+  {
+    "index": 538,
+    "kanji": "増える",
+    "kana": "ふえる",
+    "translation": "увеличиваться, прибавляться, расти"
+  },
+  {
+    "index": 539,
+    "kanji": "深い",
+    "kana": "ふかい",
+    "translation": "глубокий"
+  },
+  {
+    "index": 540,
+    "kanji": "複雑",
+    "kana": "ふくざつ",
+    "translation": "сложный, запутанный"
+  },
+  {
+    "index": 541,
+    "kanji": "復習",
+    "kana": "ふくしゅう",
+    "translation": "повторение"
+  },
+  {
+    "index": 542,
+    "kanji": "普通",
+    "kana": "ふつう",
+    "translation": "обычный, простой, обычно, как правило"
+  },
+  {
+    "index": 543,
+    "kanji": "葡萄",
+    "kana": "ぶどう",
+    "translation": "виноград"
+  },
+  {
+    "index": 544,
+    "kanji": "太る",
+    "kana": "ふとる",
+    "translation": "толстеть"
+  },
+  {
+    "index": 545,
+    "kanji": "布団",
+    "kana": "ふとん",
+    "translation": "футон"
+  },
+  {
+    "index": 546,
+    "kanji": "舟",
+    "kana": "ふね",
+    "translation": "корабль, лодка"
+  },
+  {
+    "index": 547,
+    "kanji": "不便",
+    "kana": "ふベん",
+    "translation": "неудобный"
+  },
+  {
+    "index": 548,
+    "kanji": "踏む",
+    "kana": "ふむ",
+    "translation": "наступать ногой, топтать"
+  },
+  {
+    "index": 549,
+    "kanji": "",
+    "kana": "プレゼント",
+    "translation": "подарок"
+  },
+  {
+    "index": 550,
+    "kanji": "文化",
+    "kana": "ぶんか",
+    "translation": "культура"
+  },
+  {
+    "index": 551,
+    "kanji": "文学",
+    "kana": "ぶんがく",
+    "translation": "литература"
+  },
+  {
+    "index": 552,
+    "kanji": "文法",
+    "kana": "ぶんぽう",
+    "translation": "грамматика"
+  },
+  {
+    "index": 553,
+    "kanji": "別に",
+    "kana": "べつに",
+    "translation": "особенно, отдельно, кроме"
+  },
+  {
+    "index": 554,
+    "kanji": "",
+    "kana": "ベル",
+    "translation": "звонок"
+  },
+  {
+    "index": 555,
+    "kanji": "変",
+    "kana": "へん",
+    "translation": "странный, неприличный"
+  },
+  {
+    "index": 556,
+    "kanji": "返事（する）",
+    "kana": "へんじ",
+    "translation": "ответ"
+  },
+  {
+    "index": 557,
+    "kanji": "貿易",
+    "kana": "ぼうえき",
+    "translation": "внешняя торговля"
+  },
+  {
+    "index": 558,
+    "kanji": "放送",
+    "kana": "ほうそう",
+    "translation": "вещание, передача"
+  },
+  {
+    "index": 559,
+    "kanji": "法律",
+    "kana": "ほうりつ",
+    "translation": "юридический закон, законный"
+  },
+  {
+    "index": 560,
+    "kanji": "僕",
+    "kana": "ぼく",
+    "translation": "я"
+  },
+  {
+    "index": 561,
+    "kanji": "星",
+    "kana": "ほし",
+    "translation": "звезда"
+  },
+  {
+    "index": 562,
+    "kanji": "程",
+    "kana": "ほど",
+    "translation": "мера, степень, настолько..."
+  },
+  {
+    "index": 563,
+    "kanji": "殆ど",
+    "kana": "ほとんど",
+    "translation": "почти"
+  },
+  {
+    "index": 564,
+    "kanji": "褒める",
+    "kana": "ほめる",
+    "translation": "хвалить, одобрять"
+  },
+  {
+    "index": 565,
+    "kanji": "翻訳",
+    "kana": "ほんやく",
+    "translation": "письменный перевод"
+  },
+  {
+    "index": 566,
+    "kanji": "参る",
+    "kana": "まいる",
+    "translation": "идти, сдаваться, посещать (храм)"
+  },
+  {
+    "index": 567,
+    "kanji": "負ける",
+    "kana": "まける",
+    "translation": "проигрывать, поддаваться, уступать"
+  },
+  {
+    "index": 568,
+    "kanji": "真面目",
+    "kana": "まじめ",
+    "translation": "серьезный"
+  },
+  {
+    "index": 569,
+    "kanji": "先ず",
+    "kana": "まず",
+    "translation": "прежде всего, в целом"
+  },
+  {
+    "index": 570,
+    "kanji": "又は",
+    "kana": "または",
+    "translation": "или же, либо"
+  },
+  {
+    "index": 571,
+    "kanji": "間違える",
+    "kana": "まちがえる",
+    "translation": "ошибаться, перепутать"
+  },
+  {
+    "index": 572,
+    "kanji": "間に合う",
+    "kana": "まにあう",
+    "translation": "успеть, годиться"
+  },
+  {
+    "index": 573,
+    "kanji": "",
+    "kana": "まま",
+    "translation": "так, как есть"
+  },
+  {
+    "index": 574,
+    "kanji": "回り",
+    "kana": "まわり",
+    "translation": "окрестности, окружность, вращение"
+  },
+  {
+    "index": 575,
+    "kanji": "回る",
+    "kana": "まわる",
+    "translation": "вертеться, вращаться, объезжать"
+  },
+  {
+    "index": 576,
+    "kanji": "漫画",
+    "kana": "まんが",
+    "translation": "комикс, карикатура"
+  },
+  {
+    "index": 577,
+    "kanji": "真ん中",
+    "kana": "まんなか",
+    "translation": "центр, середина"
+  },
+  {
+    "index": 578,
+    "kanji": "見える",
+    "kana": "みえる",
+    "translation": "виднеться, выглядеть"
+  },
+  {
+    "index": 579,
+    "kanji": "湖",
+    "kana": "みずうみ",
+    "translation": "озеро"
+  },
+  {
+    "index": 581,
+    "kanji": "見付かる",
+    "kana": "みつかる",
+    "translation": "быть замеченным, найденным, попасться"
+  },
+  {
+    "index": 582,
+    "kanji": "見付ける",
+    "kana": "みつける",
+    "translation": "обнаруживать"
+  },
+  {
+    "index": 583,
+    "kanji": "緑",
+    "kana": "みどり",
+    "translation": "зелень, растительность"
+  },
+  {
+    "index": 584,
+    "kanji": "皆",
+    "kana": "みな",
+    "translation": "все, всё"
+  },
+  {
+    "index": 585,
+    "kanji": "港",
+    "kana": "みなと",
+    "translation": "порт, гавань"
+  },
+  {
+    "index": 586,
+    "kanji": "迎える",
+    "kana": "むかえる",
+    "translation": "встречать, выходить навстречу"
+  },
+  {
+    "index": 587,
+    "kanji": "昔",
+    "kana": "むかし",
+    "translation": "старина, прошлое"
+  },
+  {
+    "index": 588,
+    "kanji": "虫",
+    "kana": "むし",
+    "translation": "насекомое"
+  },
+  {
+    "index": 589,
+    "kanji": "息子",
+    "kana": "むすこ",
+    "translation": "сын"
+  },
+  {
+    "index": 590,
+    "kanji": "娘",
+    "kana": "むすめ",
+    "translation": "дочь, девушка"
+  },
+  {
+    "index": 591,
+    "kanji": "村",
+    "kana": "むら",
+    "translation": "деревня"
+  },
+  {
+    "index": 592,
+    "kanji": "無理",
+    "kana": "むり",
+    "translation": "невозможно, нельзя, необоснованность"
+  },
+  {
+    "index": 593,
+    "kanji": "目",
+    "kana": "め",
+    "translation": "сч. суф. порядковых числительных"
+  },
+  {
+    "index": 594,
+    "kanji": "召し上がる",
+    "kana": "めしあがる",
+    "translation": "кушать, пить (вежл. о 2-3 лице)"
+  },
+  {
+    "index": 595,
+    "kanji": "珍しい",
+    "kana": "めずらしい",
+    "translation": "редкий, необычный, оригинальный"
+  },
+  {
+    "index": 596,
+    "kanji": "申し上げる",
+    "kana": "もうしあげる",
+    "translation": "говорить (скромно о себе)"
+  },
+  {
+    "index": 597,
+    "kanji": "申す",
+    "kana": "もうす",
+    "translation": "говорить, называться"
+  },
+  {
+    "index": 598,
+    "kanji": "もう直ぐ",
+    "kana": "もうすぐ",
+    "translation": "вот-вот, скоро"
+  },
+  {
+    "index": 599,
+    "kanji": "もう一つ",
+    "kana": "もうひとつ",
+    "translation": "еще один"
+  },
+  {
+    "index": 600,
+    "kanji": "若し",
+    "kana": "もし",
+    "translation": "если"
+  },
+  {
+    "index": 601,
+    "kanji": "戻る",
+    "kana": "もどる",
+    "translation": "возвращаться"
+  },
+  {
+    "index": 602,
+    "kanji": "木綿",
+    "kana": "もめん",
+    "translation": "хлопчатобумажная ткань"
+  },
+  {
+    "index": 603,
+    "kanji": "貰う",
+    "kana": "もらう",
+    "translation": "получать, брать"
+  },
+  {
+    "index": 604,
+    "kanji": "焼く",
+    "kana": "やく",
+    "translation": "жечь, сжигать, обжигать, ревновать"
+  },
+  {
+    "index": 605,
+    "kanji": "約束（する）",
+    "kana": "やくそく",
+    "translation": "обещание, договоренность"
+  },
+  {
+    "index": 606,
+    "kanji": "役に立つ",
+    "kana": "やくにたつ",
+    "translation": "полезный, пригодиться"
+  },
+  {
+    "index": 607,
+    "kanji": "焼ける",
+    "kana": "やける",
+    "translation": "гореть, сгорать, выгорать (о цвете), ревновать"
+  },
+  {
+    "index": 608,
+    "kanji": "優しい",
+    "kana": "やさしい",
+    "translation": "добрый, ласковый, нежный"
+  },
+  {
+    "index": 609,
+    "kanji": "易い",
+    "kana": "やすい",
+    "translation": "легко..."
+  },
+  {
+    "index": 610,
+    "kanji": "痩せる",
+    "kana": "やせる",
+    "translation": "худеть, истощаться"
+  },
+  {
+    "index": 611,
+    "kanji": "",
+    "kana": "やっと",
+    "translation": "наконец-то"
+  },
+  {
+    "index": 612,
+    "kanji": "矢張り",
+    "kana": "やっぱり",
+    "translation": "всё-таки, всё же, всё равно, также, тоже"
+  },
+  {
+    "index": 613,
+    "kanji": "止む",
+    "kana": "やむ",
+    "translation": "кончаться, переставать"
+  },
+  {
+    "index": 614,
+    "kanji": "止める",
+    "kana": "やめる",
+    "translation": "прекращать, переставать, оставлять(службу)"
+  },
+  {
+    "index": 615,
+    "kanji": "遣る",
+    "kana": "やる",
+    "translation": "давать"
+  },
+  {
+    "index": 616,
+    "kanji": "軟らかい",
+    "kana": "やわらかい",
+    "translation": "мягкий, нежный"
+  },
+  {
+    "index": 617,
+    "kanji": "湯",
+    "kana": "ゆ",
+    "translation": "горячая вода, горячий источник, ванна,баня"
+  },
+  {
+    "index": 618,
+    "kanji": "夕飯",
+    "kana": "ゆうはん",
+    "translation": "ужин"
+  },
+  {
+    "index": 619,
+    "kanji": "輸出",
+    "kana": "ゆしゅつ",
+    "translation": "экспорт, вывоз"
+  },
+  {
+    "index": 620,
+    "kanji": "指",
+    "kana": "ゆび",
+    "translation": "палец"
+  },
+  {
+    "index": 621,
+    "kanji": "指輪",
+    "kana": "ゆびわ",
+    "translation": "кольцо, перстень"
+  },
+  {
+    "index": 622,
+    "kanji": "夢",
+    "kana": "ゆめ",
+    "translation": "сон, мечта"
+  },
+  {
+    "index": 623,
+    "kanji": "揺れる",
+    "kana": "ゆれる",
+    "translation": "качаться, колебаться"
+  },
+  {
+    "index": 624,
+    "kanji": "用",
+    "kana": "よう",
+    "translation": "дело, необходимость, применение"
+  },
+  {
+    "index": 626,
+    "kanji": "用事",
+    "kana": "ようじ",
+    "translation": "дело, дела"
+  },
+  {
+    "index": 627,
+    "kanji": "汚れる",
+    "kana": "よごれる",
+    "translation": "пачкаться, загрязняться"
+  },
+  {
+    "index": 628,
+    "kanji": "予習",
+    "kana": "よしゅう",
+    "translation": "подготовка уроков"
+  },
+  {
+    "index": 629,
+    "kanji": "予定",
+    "kana": "よてい",
+    "translation": "план, расписание, намётка, предварительный расчёт"
+  },
+  {
+    "index": 630,
+    "kanji": "予約",
+    "kana": "よやく",
+    "translation": "договорённость, заказ, бронирование, подписка"
+  },
+  {
+    "index": 631,
+    "kanji": "寄る",
+    "kana": "よる",
+    "translation": "приближаться, подходить, заходить,собираться"
+  },
+  {
+    "index": 632,
+    "kanji": "喜ぶ",
+    "kana": "よろこぶ",
+    "translation": "радоваться"
+  },
+  {
+    "index": 633,
+    "kanji": "宜しい",
+    "kana": "よろしい",
+    "translation": "хороший"
+  },
+  {
+    "index": 634,
+    "kanji": "弱い",
+    "kana": "よわい",
+    "translation": "слабый"
+  },
+  {
+    "index": 635,
+    "kanji": "理由",
+    "kana": "りゆう",
+    "translation": "причина, мотив, повод"
+  },
+  {
+    "index": 636,
+    "kanji": "利用(する)",
+    "kana": "りよう",
+    "translation": "использование, применение"
+  },
+  {
+    "index": 637,
+    "kanji": "両方",
+    "kana": "りょうほう",
+    "translation": "оба, обе стороны"
+  },
+  {
+    "index": 638,
+    "kanji": "旅館",
+    "kana": "りょかん",
+    "translation": "гостиница в японском стиле"
+  },
+  {
+    "index": 639,
+    "kanji": "留守",
+    "kana": "るす",
+    "translation": "отсутствие, пребывание вне дома"
+  },
+  {
+    "index": 640,
+    "kanji": "歴史",
+    "kana": "れきし",
+    "translation": "история"
+  },
+  {
+    "index": 641,
+    "kanji": "連絡（する）",
+    "kana": "れんらく",
+    "translation": "связь, контакт, коммуникация"
+  },
+  {
+    "index": 642,
+    "kanji": "沸かす",
+    "kana": "わかす",
+    "translation": "кипятить, будоражить, волновать"
+  },
+  {
+    "index": 643,
+    "kanji": "別れる",
+    "kana": "わかれる",
+    "translation": "отделяться"
+  },
+  {
+    "index": 644,
+    "kanji": "沸く",
+    "kana": "わく",
+    "translation": "кипеть, бурлить, плавиться, расплавляться"
+  },
+  {
+    "index": 645,
+    "kanji": "訳",
+    "kana": "わけ",
+    "translation": "смысл, значение, суть, причина"
+  },
+  {
+    "index": 646,
+    "kanji": "忘れ物",
+    "kana": "わすれもの",
+    "translation": "забытая вещь"
+  },
+  {
+    "index": 647,
+    "kanji": "笑う",
+    "kana": "わらう",
+    "translation": "смеяться"
+  },
+  {
+    "index": 648,
+    "kanji": "割合",
+    "kana": "わりあい",
+    "translation": "соотношение"
+  },
+  {
+    "index": 649,
+    "kanji": "割合に",
+    "kana": "わりあいに",
+    "translation": "сравнительно, относительно"
+  },
+  {
+    "index": 650,
+    "kanji": "割れる",
+    "kana": "われる",
+    "translation": "разбиваться, трескаться, делиться на..."
+  }
+]
