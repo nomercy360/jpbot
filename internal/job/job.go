@@ -50,7 +50,7 @@ func (j *job) syncWords() error {
 	var words []db.Word
 
 	for _, level := range levels {
-		filePath := fmt.Sprintf("materials/vocab_%s.json", level)
+		filePath := fmt.Sprintf("materials/vocab_%s.json", strings.ToLower(level))
 		file, err := os.Open(filePath)
 		if err != nil {
 			return fmt.Errorf("failed to open file: %w", err)
@@ -118,131 +118,97 @@ func (j *job) syncWords() error {
 	return nil
 }
 
+type exerciseFile struct {
+	filePath    string
+	exType      string
+	contentType interface{}
+}
+
+func (j *job) processExerciseFile(level string, ef exerciseFile) ([]db.Exercise, error) {
+	file, err := os.Open(ef.filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file %s: %w", ef.filePath, err)
+	}
+	defer file.Close()
+
+	var rawExercises []interface{}
+	if err := json.NewDecoder(file).Decode(&rawExercises); err != nil {
+		return nil, fmt.Errorf("failed to decode JSON from %s: %w", ef.filePath, err)
+	}
+
+	var exercises []db.Exercise
+	for _, raw := range rawExercises {
+		contentJSON, err := json.Marshal(raw)
+		if err != nil {
+			log.Printf("Failed to marshal content for %v: %v", raw, err)
+			continue
+		}
+
+		exercises = append(exercises, db.Exercise{
+			Level:   strings.ToUpper(level),
+			Type:    ef.exType,
+			Content: contentJSON,
+		})
+	}
+
+	if err := j.db.SaveTasksBatch(exercises); err != nil {
+		return nil, fmt.Errorf("failed to save %s exercises: %w", ef.exType, err)
+	}
+
+	log.Printf("Saved %d %s exercises for level %s", len(exercises), ef.exType, level)
+	return exercises, nil
+}
+
 func (j *job) syncExercises() error {
 	levels := []string{db.LevelN5}
+	exerciseFiles := []exerciseFile{
+		{
+			filePath:    "materials/questions_%s.json",
+			exType:      db.ExerciseTypeQuestion,
+			contentType: db.QuestionContent{},
+		},
+		{
+			filePath: "materials/audio_%s.json",
+			exType:   db.ExerciseTypeAudio,
+			contentType: struct {
+				Text     string `json:"text"`
+				Question string `json:"question"`
+			}{},
+		},
+		{
+			filePath: "materials/sentences_%s.json",
+			exType:   db.ExerciseTypeTranslation,
+			contentType: struct {
+				Russian  string `json:"russian"`
+				Japanese string `json:"japanese"`
+			}{},
+		},
+		{
+			filePath: "materials/grammar_%s.json",
+			exType:   db.ExerciseTypeGrammar,
+			contentType: struct {
+				Grammar   string `json:"grammar"`
+				Meaning   string `json:"meaning"`
+				Structure string `json:"structure"`
+				Example   string `json:"example"`
+			}{},
+		},
+	}
 
+	var allExercises []db.Exercise
 	for _, level := range levels {
-		filePath := fmt.Sprintf("materials/questions_%s.json", level)
-		file, err := os.Open(filePath)
-		if err != nil {
-			return fmt.Errorf("failed to open file: %w", err)
-		}
-
-		defer file.Close()
-		var questions []string
-		if err := json.NewDecoder(file).Decode(&questions); err != nil {
-			return fmt.Errorf("failed to decode JSON: %w", err)
-		}
-
-		var exercises []db.Exercise
-		for _, question := range questions {
-			content := db.QuestionContent{
-				Question: question,
-			}
-
-			contentJSON, err := json.Marshal(content)
+		for _, ef := range exerciseFiles {
+			filePath := fmt.Sprintf(ef.filePath, strings.ToLower(level))
+			exercises, err := j.processExerciseFile(level, exerciseFile{
+				filePath:    filePath,
+				exType:      ef.exType,
+				contentType: ef.contentType,
+			})
 			if err != nil {
-				log.Printf("Failed to marshal content for %s: %v", question, err)
-				continue
+				return err
 			}
-
-			exercise := db.Exercise{
-				Level:   strings.ToUpper(level),
-				Type:    db.ExerciseTypeQuestion,
-				Content: contentJSON,
-			}
-			exercises = append(exercises, exercise)
+			allExercises = append(allExercises, exercises...)
 		}
-
-		if err := j.db.SaveTasksBatch(exercises); err != nil {
-			return fmt.Errorf("failed to save exercises: %w", err)
-		}
-		log.Printf("Saved %d exercises for level %s", len(exercises), level)
-
-		filePath = fmt.Sprintf("materials/audio_%s.json", level)
-		file, err = os.Open(filePath)
-		if err != nil {
-			return fmt.Errorf("failed to open file: %w", err)
-		}
-
-		defer file.Close()
-
-		type AudioExercise struct {
-			Text     string `json:"text"`
-			Question string `json:"question"`
-		}
-
-		var audioExercises []AudioExercise
-		if err := json.NewDecoder(file).Decode(&audioExercises); err != nil {
-			return fmt.Errorf("failed to decode JSON: %w", err)
-		}
-
-		for _, audioExercise := range audioExercises {
-			content := db.AudioContent{
-				Text:     audioExercise.Text,
-				Question: audioExercise.Question,
-			}
-
-			contentJSON, err := json.Marshal(content)
-			if err != nil {
-				log.Printf("Failed to marshal content for %s: %v", audioExercise.Question, err)
-				continue
-			}
-
-			exercise := db.Exercise{
-				Level:   strings.ToUpper(level),
-				Type:    db.ExerciseTypeAudio,
-				Content: contentJSON,
-			}
-			exercises = append(exercises, exercise)
-		}
-		if err := j.db.SaveTasksBatch(exercises); err != nil {
-			return fmt.Errorf("failed to save exercises: %w", err)
-		}
-
-		log.Printf("Saved %d audio exercises for level %s", len(exercises), level)
-
-		filePath = fmt.Sprintf("materials/sentences_%s.json", level)
-		file, err = os.Open(filePath)
-		if err != nil {
-			return fmt.Errorf("failed to open file: %w", err)
-		}
-
-		defer file.Close()
-		type SentenceExercise struct {
-			Russian  string `json:"russian"`
-			Japanese string `json:"japanese"`
-		}
-		var sentenceExercises []SentenceExercise
-		if err := json.NewDecoder(file).Decode(&sentenceExercises); err != nil {
-			return fmt.Errorf("failed to decode JSON: %w", err)
-		}
-
-		for _, sentenceExercise := range sentenceExercises {
-			content := db.SentenceContent{
-				Russian:  sentenceExercise.Russian,
-				Japanese: sentenceExercise.Japanese,
-			}
-
-			contentJSON, err := json.Marshal(content)
-			if err != nil {
-				log.Printf("Failed to marshal content for %s: %v", sentenceExercise.Japanese, err)
-				continue
-			}
-
-			exercise := db.Exercise{
-				Level:   strings.ToUpper(level),
-				Type:    db.ExerciseTypeTranslation,
-				Content: contentJSON,
-			}
-			exercises = append(exercises, exercise)
-		}
-
-		if err := j.db.SaveTasksBatch(exercises); err != nil {
-			return fmt.Errorf("failed to save exercises: %w", err)
-		}
-
-		log.Printf("Saved %d translation exercises for level %s", len(exercises), level)
 	}
 
 	return nil
