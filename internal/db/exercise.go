@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -10,18 +11,44 @@ import (
 )
 
 type Exercise struct {
-	ID        int64     `db:"id" json:"id"`
-	Level     string    `db:"level" json:"level"`
-	Type      string    `db:"type" json:"type"`
-	Content   Content   `db:"content" json:"content"`
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	ID        int64           `db:"id" json:"id"`
+	Level     string          `db:"level" json:"level"`
+	Type      string          `db:"type" json:"type"`
+	Content   json.RawMessage `db:"content"   json:"content"`
+	CreatedAt time.Time       `db:"created_at" json:"created_at"`
 }
 
-type Content struct {
+func ContentAs[T any](content json.RawMessage) (T, error) {
+	var result T
+	if err := json.Unmarshal(content, &result); err != nil {
+		return result, fmt.Errorf("error unmarshalling content: %w", err)
+	}
+	return result, nil
+}
+
+type GrammarContent struct {
 	Grammar   string `json:"grammar"`
 	Meaning   string `json:"meaning"`
 	Structure string `json:"structure"`
 	Example   string `json:"example"`
+}
+
+type TranslationContent struct {
+	Example string `json:"example"`
+}
+
+type QuestionContent struct {
+	Question string `json:"question"`
+}
+
+type AudioContent struct {
+	Text     string `json:"text"`
+	Question string `json:"question"`
+}
+
+type SentenceContent struct {
+	Japanese string `json:"japanese"`
+	Russian  string `json:"russian"`
 }
 
 type Submission struct {
@@ -121,37 +148,32 @@ func (s *storage) GetExercisesByLevel(level string) ([]Exercise, error) {
 	}
 	defer rows.Close()
 
-	var exercises []Exercise
-	var contentJSON sql.NullString
+	var out []Exercise
+	var raw sql.NullString
 	for rows.Next() {
-		var exercise Exercise
+		var e Exercise
 		if err := rows.Scan(
-			&exercise.ID,
-			&exercise.Level,
-			&contentJSON,
-			&exercise.Type,
-			&exercise.CreatedAt,
+			&e.ID,
+			&e.Level,
+			&raw,
+			&e.Type,
+			&e.CreatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("error scanning exercise: %w", err)
 		}
 
-		if contentJSON.Valid {
-			exercise.Content, err = UnmarshalJSONToStruct[Content](contentJSON.String)
-			if err != nil {
-				return nil, fmt.Errorf("error unmarshalling exercise content: %w", err)
-			}
-		} else {
-			return nil, fmt.Errorf("exercise content is null")
+		if raw.Valid {
+			e.Content = json.RawMessage(raw.String)
 		}
 
-		exercises = append(exercises, exercise)
+		out = append(out, e)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("error iterating over rows: %w", err)
 	}
 
-	return exercises, nil
+	return out, nil
 }
 
 func (s *storage) GetExercisesByLevelAndType(level, exType string) ([]Exercise, error) {
@@ -162,35 +184,34 @@ func (s *storage) GetExercisesByLevelAndType(level, exType string) ([]Exercise, 
 	}
 	defer rows.Close()
 
-	var exercises []Exercise
+	var out []Exercise
 	for rows.Next() {
-		var exercise Exercise
-		var contentJSON sql.NullString
+		var e Exercise
+		var raw sql.NullString
 		if err := rows.Scan(
-			&exercise.ID,
-			&exercise.Level,
-			&contentJSON,
-			&exercise.Type,
-			&exercise.CreatedAt,
+			&e.ID,
+			&e.Level,
+			&raw,
+			&e.Type,
+			&e.CreatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("error scanning exercise: %w", err)
 		}
-		if contentJSON.Valid {
-			exercise.Content, err = UnmarshalJSONToStruct[Content](contentJSON.String)
-			if err != nil {
-				return nil, fmt.Errorf("error unmarshalling exercise content: %w", err)
-			}
+
+		if raw.Valid {
+			e.Content = json.RawMessage(raw.String)
 		} else {
 			return nil, fmt.Errorf("exercise content is null")
 		}
-		exercises = append(exercises, exercise)
+
+		out = append(out, e)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("error iterating over rows: %w", err)
 	}
 
-	return exercises, nil
+	return out, nil
 }
 func (s *storage) GetNextExerciseForUser(userID int64, level string, exTypes []string) (Exercise, error) {
 	placeholders := make([]string, len(exTypes))
@@ -219,32 +240,29 @@ func (s *storage) GetNextExerciseForUser(userID int64, level string, exTypes []s
 		LIMIT 1
 	`, strings.Join(placeholders, ","))
 
-	var exercise Exercise
-	var contentJSON sql.NullString
+	var e Exercise
+	var raw sql.NullString
 	err := s.db.QueryRow(query, args...).Scan(
-		&exercise.ID,
-		&exercise.Level,
-		&contentJSON,
-		&exercise.Type,
-		&exercise.CreatedAt,
+		&e.ID,
+		&e.Level,
+		&raw,
+		&e.Type,
+		&e.CreatedAt,
 	)
 
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return exercise, ErrNotFound
+		return e, ErrNotFound
 	} else if err != nil {
-		return exercise, fmt.Errorf("error getting next exercise: %w", err)
+		return e, fmt.Errorf("error getting next exercise: %w", err)
 	}
 
-	if contentJSON.Valid {
-		exercise.Content, err = UnmarshalJSONToStruct[Content](contentJSON.String)
-		if err != nil {
-			return exercise, fmt.Errorf("error unmarshalling exercise content: %w", err)
-		}
+	if raw.Valid {
+		e.Content = json.RawMessage(raw.String)
 	} else {
-		return exercise, fmt.Errorf("exercise content is null")
+		return e, fmt.Errorf("exercise content is null")
 	}
 
-	return exercise, nil
+	return e, nil
 }
 
 func (s *storage) MarkExerciseSent(userID, exerciseID int64) error {
@@ -297,10 +315,7 @@ func (s *storage) GetExerciseByID(exerciseID int64) (Exercise, error) {
 	}
 
 	if contentJSON.Valid {
-		exercise.Content, err = UnmarshalJSONToStruct[Content](contentJSON.String)
-		if err != nil {
-			return exercise, fmt.Errorf("error unmarshalling exercise content: %w", err)
-		}
+		exercise.Content = json.RawMessage(contentJSON.String)
 	} else {
 		return exercise, fmt.Errorf("exercise content is null")
 	}
@@ -344,4 +359,14 @@ func (s *storage) CountUnsolvedExercisesForUser(userID int64, level string) (int
 	}
 
 	return count, nil
+}
+
+func (s *storage) IsExercisesInitialized() (bool, error) {
+	query := `SELECT COUNT(*) FROM exercises`
+	var count int
+	err := s.db.QueryRow(query).Scan(&count)
+	if err != nil {
+		return false, fmt.Errorf("error checking if exercises are initialized: %w", err)
+	}
+	return count > 0, nil
 }

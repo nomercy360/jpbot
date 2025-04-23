@@ -267,3 +267,13 @@ func (s *storage) ClearUserWord(userID int64) error {
 	}
 	return nil
 }
+
+func (s *storage) IsWordsInitialized() (bool, error) {
+	var count int
+	query := `SELECT COUNT(*) FROM words`
+	err := s.db.QueryRow(query).Scan(&count)
+	if err != nil {
+		return false, fmt.Errorf("error checking if words are initialized: %w", err)
+	}
+	return count > 0, nil
+}

@@ -39,6 +39,7 @@ type OpenAIClient interface {
 	CheckExercise(s db.Submission) (ai.ExerciseFeedback, error)
 	GenerateAudio(text string) (io.ReadCloser, error)
 	CheckWordTranslation(word, translation, userInput string) (ai.WordTranslationEvaluation, error)
+	ExplainSentence(sentence string) (string, error)
 }
 
 type handler struct {
@@ -93,7 +94,7 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 	if err != nil && errors.Is(err, db.ErrNotFound) {
 		newUser := &db.User{
 			TelegramID: chatID,
-			Level:      db.LevelN3,
+			Level:      db.LevelN5,
 		}
 
 		if err := h.db.SaveUser(newUser); err != nil {
@@ -176,21 +177,25 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 		} else {
 			switch exercise.Type {
 			case db.ExerciseTypeQuestion:
-				msg.Text = fmt.Sprintf("Задание:\n\nОтветь на вопрос: %s\n\nИспользуй /hint для подсказки", exercise.Content.Example)
+				c, _ := db.ContentAs[db.QuestionContent](exercise.Content)
+				msg.Text = fmt.Sprintf("Задание:\n\nОтветь на вопрос: %s\n\nИспользуй /explain для подсказки", c.Question)
 			case db.ExerciseTypeTranslation:
-				msg.Text = fmt.Sprintf("Задание:\n\nПереведи: %s\n\nИспользуй /hint для подсказки", exercise.Content.Example)
+				c, _ := db.ContentAs[db.SentenceContent](exercise.Content)
+				msg.Text = fmt.Sprintf("Задание:\n\nПереведи: %s", c.Russian)
 			case db.ExerciseTypeGrammar:
+				c, _ := db.ContentAs[db.GrammarContent](exercise.Content)
 				msg.Text = fmt.Sprintf("🔹*Грамматика:* %s\n💡*Значение:* %s\n🧱*Структура:* %s\n*🗣Пример:* %s\n\nТвой пример:",
-					telegram.EscapeMarkdown(exercise.Content.Grammar),
-					telegram.EscapeMarkdown(exercise.Content.Meaning),
-					telegram.EscapeMarkdown(exercise.Content.Structure),
-					telegram.EscapeMarkdown(exercise.Content.Example),
+					telegram.EscapeMarkdown(c.Grammar),
+					telegram.EscapeMarkdown(c.Meaning),
+					telegram.EscapeMarkdown(c.Structure),
+					telegram.EscapeMarkdown(c.Example),
 				)
 				msg.ParseMode = models.ParseModeMarkdown
 			case db.ExerciseTypeAudio:
-				msg.Text = fmt.Sprintf("Задание:\n\nПрослушай аудио и ответь на вопрос: %s", exercise.Content.Example)
+				c, _ := db.ContentAs[db.AudioContent](exercise.Content)
+				msg.Text = fmt.Sprintf("Задание:\n\nПрослушай аудио и ответь на вопрос: %s\n\nИспользуй /explain для подсказки", c.Question)
 
-				audioReader, err := h.openaiClient.GenerateAudio(exercise.Content.Example)
+				audioReader, err := h.openaiClient.GenerateAudio(c.Text)
 				if err != nil {
 					log.Printf("Failed to generate audio: %v", err)
 					msg.Text = "Ошибка при генерации аудио. Попробуй позже."
@@ -212,7 +217,6 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 						Filename: "voice.ogg", // Telegram требует имя
 						Data:     bytes.NewReader(audioData),
 					},
-					Caption: "Прослушай и ответь на вопрос",
 				}
 
 				if _, err := h.bot.SendVoice(context.Background(), params); err != nil {
@@ -243,19 +247,46 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 				log.Printf("Failed to mark word as sent: %v", err)
 			}
 		}
-	case "hint":
+	case "explain":
 		if user.CurrentExerciseID == nil {
 			msg.Text = "Сначала получи задание с помощью /task."
 			break
 		}
-
 		exercise, err := h.db.GetExerciseByID(*user.CurrentExerciseID)
 		if err != nil {
 			msg.Text = "Ошибка при получении задания."
 			log.Printf("Failed to get exercise: %v", err)
 			break
 		}
-		msg.Text = exercise.Content.Example
+
+		var sentence string
+		if exercise.Type == db.ExerciseTypeQuestion {
+			c, _ := db.ContentAs[db.QuestionContent](exercise.Content)
+			sentence = c.Question
+		} else if exercise.Type == db.ExerciseTypeAudio {
+			c, _ := db.ContentAs[db.AudioContent](exercise.Content)
+			sentence = c.Text
+		} else {
+			msg.Text = "Подсказка доступна только для вопросов и аудио."
+			break
+		}
+
+		go func() {
+			if _, err := h.bot.SendChatAction(context.Background(), &telegram.SendChatActionParams{
+				ChatID: chatID,
+				Action: models.ChatActionTyping,
+			}); err != nil {
+				log.Printf("Failed to send typing action: %v", err)
+			}
+		}()
+
+		explanation, err := h.openaiClient.ExplainSentence(sentence)
+		if err != nil {
+			msg.Text = "Ошибка при получении подсказки."
+			log.Printf("Failed to explain sentence: %v", err)
+			break
+		}
+		msg.Text = explanation
 	case "answer":
 		if user.CurrentWordID == nil {
 			msg.Text = "Сначала получи слово с помощью /vocab."
@@ -335,14 +366,16 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 				break
 			}
 
-			submission.GPTFeedback = fmt.Sprintf("Оценка: %d, Комментарий: %s, Предложение: %s",
-				feedback.Score, feedback.Comment, feedback.Suggestion)
+			feedbackText := fmt.Sprintf("%s", feedback.Comment)
+			if feedback.Suggestion != "" {
+				feedbackText += fmt.Sprintf("\n\n%s", feedback.Suggestion)
+			}
 
+			submission.GPTFeedback = feedbackText
 			submission.IsCorrect = feedback.Score >= 80
 
 			if submission.IsCorrect {
-				msg.Text = fmt.Sprintf("Правильно\\! 🎉\n\n%s\n\nЧтобы получить новое задание, используй /task\\.",
-					telegram.EscapeMarkdown(feedback.Comment))
+				msg.Text = fmt.Sprintf("Правильно\\! 🎉\n\nЧтобы получить новое задание, используй /task\\.")
 				msg.ParseMode = models.ParseModeMarkdown
 				user.CurrentExerciseID = nil
 				if err := h.db.ClearUserExercise(chatID); err != nil {

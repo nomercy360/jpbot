@@ -8,8 +8,8 @@ require (
 	github.com/go-telegram/bot v1.14.2
 	github.com/invopop/jsonschema v0.13.0
 	github.com/labstack/echo/v4 v4.13.3
-	github.com/mattn/go-sqlite3 v1.14.27
-	github.com/openai/openai-go v0.1.0-beta.9
+	github.com/mattn/go-sqlite3 v1.14.28
+	github.com/openai/openai-go v0.1.0-beta.10
 	gopkg.in/yaml.v3 v3.0.1
 )
 
