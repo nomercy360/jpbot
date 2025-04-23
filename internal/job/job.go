@@ -163,9 +163,11 @@ func (j *job) syncExercises() error {
 	levels := []string{db.LevelN5}
 	exerciseFiles := []exerciseFile{
 		{
-			filePath:    "materials/questions_%s.json",
-			exType:      db.ExerciseTypeQuestion,
-			contentType: db.QuestionContent{},
+			filePath: "materials/questions_%s.json",
+			exType:   db.ExerciseTypeQuestion,
+			contentType: struct {
+				Question string `json:"question"`
+			}{},
 		},
 		{
 			filePath: "materials/audio_%s.json",
