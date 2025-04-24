@@ -27,7 +27,7 @@ type Storager interface {
 	SaveSubmission(submission db.Submission) error
 	ClearUserExercise(userID int64) error
 	UpdateUserLevel(userID int64, level string) error
-	GetAllUsers() ([]db.User, error)
+	CountUsers() (int, error)
 	GetNextWordForUser(userID int64, level string) (db.Word, error)
 	GetWordByID(wordID int64) (db.Word, error)
 	SaveWordReview(submission db.TranslationSubmission) error
@@ -150,16 +150,24 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 
 	switch update.Message.Command() {
 	case "users":
-		users, err := h.db.GetAllUsers()
+		count, err := h.db.CountUsers()
 		if err != nil {
 			log.Printf("Failed to get users: %v", err)
 			msg.Text = "Ошибка при получении пользователей."
 		} else {
-			count := len(users)
 			msg.Text = fmt.Sprintf("Всего пользователей: %d", count)
 		}
 	case "start":
-		msg.Text = "Привет! Используй /task для перевода предложений и /vocab для перевода слов. \n\nИспользуй　/level, чтобы поменять сложность."
+		msg.Text = "Привет\\! Этот бот для изучения японского языка\\. Он поможет тебе практиковать перевод предложений, слов и грамматику\\!\n\n" +
+			"*Как использовать:*\n" +
+			"\\- /task — получить задание \\(перевод, вопрос, грамматика или аудио\\)\\.\n" +
+			"\\- /vocab — учить новые слова\\.\n" +
+			"\\- /level — выбрать уровень сложности \\(N5, N4, N3\\)\\.\n" +
+			"\\- /explain — получить подсказку для текущего задания\\.\n" +
+			"\\- /reset — сбросить текущее задание\\.\n\n" +
+			"🤖 Все твои ответы проверяет искусственный интеллект, который даст обратную связь и советы\\. Начинай с /task или /vocab\\!\n\n" +
+			"Подписывайся на канал @jpbot\\_learn\\_japanese\\. Там будет информация об обновлениях и обсуждение фич\\."
+		msg.ParseMode = models.ParseModeMarkdown
 	case "task":
 		if user.CurrentExerciseID != nil {
 			msg.Text = "У тебя уже есть задание. Попробуй решить его!"
@@ -336,14 +344,14 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 				tgbotapi.NewInlineKeyboardButtonData("N5", "level:N5"),
 				tgbotapi.NewInlineKeyboardButtonData("N4", "level:N4"),
 				tgbotapi.NewInlineKeyboardButtonData("N3", "level:N3"),
-				tgbotapi.NewInlineKeyboardButtonData("N2", "level:N2"),
-				tgbotapi.NewInlineKeyboardButtonData("N1", "level:N1"),
+				//tgbotapi.NewInlineKeyboardButtonData("N2", "level:N2"),
+				//tgbotapi.NewInlineKeyboardButtonData("N1", "level:N1"),
 			),
 		)
 
 		msg.ReplyMarkup = &keyboard
 	default:
-		if user.CurrentExerciseID != nil {
+		if user.CurrentExerciseID != nil && user.CurrentMode == db.ModeExercise {
 			userInput := update.Message.Text
 			exercise, err := h.db.GetExerciseByID(*user.CurrentExerciseID)
 			if err != nil {
@@ -392,7 +400,7 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 				log.Printf("Failed to save submission: %v", err)
 				msg.Text = "Ошибка при сохранении ответа."
 			}
-		} else if user.CurrentWordID != nil {
+		} else if user.CurrentWordID != nil && user.CurrentMode == db.ModeVocab {
 			userInput := update.Message.Text
 			word, err := h.db.GetWordByID(*user.CurrentWordID)
 			if err != nil {
@@ -440,7 +448,8 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 				msg.Text = fmt.Sprintf("%s\n\nПопробуй еще раз:", res.Comment)
 			}
 		} else {
-			msg.Text = "Неизвестная команда. Используй /start для получения списка команд."
+			msg.Text = "Чтобы получить задание, используй /task или /vocab.\n\n" +
+				"Если хочешь сменить уровень, используй /level.\n\n"
 		}
 
 	}

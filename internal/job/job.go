@@ -16,7 +16,6 @@ type Storager interface {
 	SaveWordsBatch(words []db.Word) error
 	GetExercisesByLevel(level string) ([]db.Exercise, error)
 	GetExercisesByLevelAndType(level, exType string) ([]db.Exercise, error)
-	GetAllUsers() ([]db.User, error)
 	CountUnsolvedExercisesForUser(userID int64, level string) (int, error)
 	IsExercisesInitialized() (bool, error)
 	IsWordsInitialized() (bool, error)

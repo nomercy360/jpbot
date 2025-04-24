@@ -76,7 +76,7 @@ func (c *Client) CheckWordTranslation(word, translation, userInput string) (Word
 Правильный перевод: 「ハイキング」`),
 		openai.AssistantMessage(`{
   "score": 40,
-  "comment": "Перевод неточный: 「道」 означает 'дорога', а не 'поход' в смысле прогулки или похода в горы."
+  "comment": "Перевод неточный: 「道」(みち) означает 'дорога', а не 'поход' в смысле прогулки или похода в горы."
 }`),
 
 		openai.UserMessage(`Русское слово: "работать"
@@ -84,7 +84,7 @@ func (c *Client) CheckWordTranslation(word, translation, userInput string) (Word
 Правильный перевод: 「働く」`),
 		openai.AssistantMessage(`{
   "score": 50,
-  "comment": "Перевод неверный: 「仕事」 — это существительное 'работа', а не глагол 'работать'."
+  "comment": "Перевод неверный: 「仕事」(しごと) — это существительное 'работа', а не глагол 'работать'."
 }`),
 	}
 

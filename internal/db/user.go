@@ -4,21 +4,30 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 )
 
 type User struct {
-	ID                int64   `db:"id"`
-	TelegramID        int64   `db:"telegram_id"`
-	Level             string  `db:"level"`
-	Points            float64 `db:"points"`
-	ExercisesDone     int     `db:"exercises_done"`
-	CurrentExerciseID *int64  `db:"current_exercise_id"`
-	CurrentWordID     *int64  `db:"current_word_id"`
+	ID                int64     `db:"id"`
+	TelegramID        int64     `db:"telegram_id"`
+	Level             string    `db:"level"`
+	Points            float64   `db:"points"`
+	ExercisesDone     int       `db:"exercises_done"`
+	CurrentExerciseID *int64    `db:"current_exercise_id"`
+	CurrentWordID     *int64    `db:"current_word_id"`
+	CurrentMode       string    `db:"current_mode"`
+	CreatedAt         time.Time `db:"created_at"`
+	UpdatedAt         time.Time `db:"updated_at"`
 }
+
+const (
+	ModeExercise = "exercise"
+	ModeVocab    = "vocab"
+)
 
 func (s *storage) GetUser(telegramID int64) (*User, error) {
 	var user User
-	query := `SELECT id, telegram_id, level, points, exercises_done, current_exercise_id, current_word_id FROM users WHERE telegram_id = ?`
+	query := `SELECT id, telegram_id, level, points, exercises_done, current_exercise_id, current_word_id, current_mode FROM users WHERE telegram_id = ?`
 	err := s.db.QueryRow(query, telegramID).Scan(
 		&user.ID,
 		&user.TelegramID,
@@ -27,6 +36,7 @@ func (s *storage) GetUser(telegramID int64) (*User, error) {
 		&user.ExercisesDone,
 		&user.CurrentExerciseID,
 		&user.CurrentWordID,
+		&user.CurrentMode,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -37,36 +47,14 @@ func (s *storage) GetUser(telegramID int64) (*User, error) {
 	return &user, nil
 }
 
-func (s *storage) GetAllUsers() ([]User, error) {
-	query := `SELECT id, telegram_id, level, points, exercises_done, current_exercise_id, current_word_id FROM users`
-	rows, err := s.db.Query(query)
+func (s *storage) CountUsers() (int, error) {
+	var count int
+	query := `SELECT COUNT(*) FROM users`
+	err := s.db.QueryRow(query).Scan(&count)
 	if err != nil {
-		return nil, fmt.Errorf("error querying users: %w", err)
+		return 0, fmt.Errorf("error counting users: %w", err)
 	}
-	defer rows.Close()
-
-	var users []User
-	for rows.Next() {
-		var user User
-		if err := rows.Scan(
-			&user.ID,
-			&user.TelegramID,
-			&user.Level,
-			&user.Points,
-			&user.ExercisesDone,
-			&user.CurrentExerciseID,
-			&user.CurrentWordID,
-		); err != nil {
-			return nil, fmt.Errorf("error scanning user: %w", err)
-		}
-		users = append(users, user)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating over rows: %w", err)
-	}
-
-	return users, nil
+	return count, nil
 }
 
 func (s *storage) UpdateUserLevel(userID int64, level string) error {

@@ -128,7 +128,12 @@ func ConnectDB(dbPath string) (*storage, error) {
 		   points INTEGER DEFAULT 0,
 		   exercises_done INTEGER DEFAULT 0,
 		   current_exercise_id INTEGER,
-		   current_word_id INTEGER
+		   current_word_id INTEGER,
+		   current_mode TEXT DEFAULT 'exercise',
+		   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		   FOREIGN KEY (current_exercise_id) REFERENCES exercises(id),
+		   FOREIGN KEY (current_word_id) REFERENCES words(id) 
 	   );
 	   CREATE TABLE IF NOT EXISTS exercises (
 			id INTEGER PRIMARY KEY,

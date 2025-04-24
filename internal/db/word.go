@@ -248,7 +248,7 @@ func (s *storage) SaveWordReview(submission TranslationSubmission) error {
 
 func (s *storage) MarkWordSent(userID, wordID int64) error {
 	_, err := s.db.Exec(
-		`UPDATE users SET current_word_id = ? WHERE telegram_id = ?`,
+		`UPDATE users SET current_word_id = ?, current_mode = 'vocab' WHERE telegram_id = ?`,
 		wordID, userID,
 	)
 	if err != nil {

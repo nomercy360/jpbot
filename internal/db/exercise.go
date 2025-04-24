@@ -268,7 +268,7 @@ func (s *storage) GetNextExerciseForUser(userID int64, level string, exTypes []s
 func (s *storage) MarkExerciseSent(userID, exerciseID int64) error {
 	updateQuery := `
 		UPDATE users	
-		SET current_exercise_id = ?	
+		SET current_exercise_id = ?, current_mode = 'exercise'
 		WHERE id = ?
 	`
 
@@ -282,8 +282,8 @@ func (s *storage) MarkExerciseSent(userID, exerciseID int64) error {
 
 func (s *storage) ClearUserExercise(userID int64) error {
 	updateQuery := `
-		UPDATE users	
-		SET current_exercise_id = NULL	
+		UPDATE users
+		SET current_exercise_id = NULL, current_word_id = NULL, current_mode = 'exercise'
 		WHERE telegram_id = ?
 	`
 
