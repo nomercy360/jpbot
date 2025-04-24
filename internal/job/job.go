@@ -46,7 +46,7 @@ type Word struct {
 }
 
 func (j *job) syncWords() error {
-	levels := []string{db.LevelN5}
+	levels := []string{db.LevelN5, db.LevelN4, db.LevelN3}
 	var words []db.Word
 
 	for _, level := range levels {
@@ -160,7 +160,7 @@ func (j *job) processExerciseFile(level string, ef exerciseFile) ([]db.Exercise,
 }
 
 func (j *job) syncExercises() error {
-	levels := []string{db.LevelN5}
+	levels := []string{db.LevelN5, db.LevelN4, db.LevelN3}
 	exerciseFiles := []exerciseFile{
 		{
 			filePath: "materials/questions_%s.json",
