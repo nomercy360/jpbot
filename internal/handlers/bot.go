@@ -438,7 +438,7 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 					log.Printf("Failed to save user: %v", err)
 				}
 				// Update rankings
-				if err := h.db.UpdateUserRanking(user.ID, 1); err != nil {
+				if err := h.db.UpdateUserRanking(user.TelegramID, 1); err != nil {
 					log.Printf("Failed to update user ranking: %v", err)
 				}
 			} else {
@@ -497,7 +497,7 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 					log.Printf("Failed to mark word as sent: %v", err)
 				}
 				// Update rankings
-				if err := h.db.UpdateUserRanking(user.ID, 1); err != nil {
+				if err := h.db.UpdateUserRanking(user.TelegramID, 1); err != nil {
 					log.Printf("Failed to update user ranking: %v", err)
 				}
 			} else {

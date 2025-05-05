@@ -122,7 +122,7 @@ func (s *storage) GetLeaderboard(periodType PeriodType, limit int) ([]Leaderboar
 			ur.score,
 			RANK() OVER (ORDER BY ur.score DESC) AS rank
 		FROM user_rankings ur
-		JOIN users u ON ur.user_id = u.id
+		JOIN users u ON ur.user_id = u.telegram_id
 		WHERE ur.period_type = ?
 		AND ur.period_start >= ?
 		AND ur.period_end <= ?
