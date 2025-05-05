@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/mattn/go-sqlite3"
 	_ "github.com/mattn/go-sqlite3"
+	"strings"
 	"time"
 )
 
@@ -132,6 +133,10 @@ func ConnectDB(dbPath string) (*storage, error) {
 		   current_mode TEXT DEFAULT 'exercise',
 		   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		   username TEXT,
+		   avatar_url TEXT,
+		   first_name TEXT,
+		   last_name TEXT,
 		   FOREIGN KEY (current_exercise_id) REFERENCES exercises(id),
 		   FOREIGN KEY (current_word_id) REFERENCES words(id) 
 	   );
@@ -172,10 +177,24 @@ func ConnectDB(dbPath string) (*storage, error) {
 			FOREIGN KEY (user_id) REFERENCES users(id),
 			UNIQUE (word_id, user_id)
 		);
-		`
+		CREATE TABLE IF NOT EXISTS user_rankings (
+			id INTEGER PRIMARY KEY,
+			user_id INTEGER NOT NULL,
+			score INTEGER NOT NULL,
+			period_start DATE NOT NULL,
+			period_end DATE NOT NULL,
+			period_type TEXT NOT NULL CHECK(period_type IN ('daily', 'weekly', 'monthly')),
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+        `
 
 	_, err = db.Exec(schema)
 	if err != nil {
+		return nil, err
+	}
+	// Ensure blocked_at column exists for users table
+	if _, err := db.Exec("ALTER TABLE users ADD COLUMN blocked_at TIMESTAMP"); err != nil && !strings.Contains(err.Error(), "duplicate column name") {
 		return nil, err
 	}
 

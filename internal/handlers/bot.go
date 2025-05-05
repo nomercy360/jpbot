@@ -13,6 +13,7 @@ import (
 	"jpbot/internal/ai"
 	"jpbot/internal/db"
 	"log"
+	"math/rand"
 	"strings"
 )
 
@@ -23,6 +24,7 @@ type Storager interface {
 	GetNextExerciseForUser(userID int64, level string, exTypes []string) (db.Exercise, error)
 	MarkExerciseSent(userID, exerciseID int64) error
 	SaveUser(user *db.User) error
+	UpdateUser(user *db.User) error
 	GetExerciseByID(exerciseID int64) (db.Exercise, error)
 	SaveSubmission(submission db.Submission) error
 	ClearUserExercise(userID int64) error
@@ -33,6 +35,9 @@ type Storager interface {
 	SaveWordReview(submission db.TranslationSubmission) error
 	MarkWordSent(userID, wordID int64) error
 	ClearUserWord(userID int64) error
+	UpdateUserRanking(userID int64, score int) error
+	GetLeaderboard(periodType db.PeriodType, limit int) ([]db.LeaderboardEntry, error)
+	GetUsersPaginated(limit, offset int) ([]db.User, error)
 }
 
 type OpenAIClient interface {
@@ -46,13 +51,23 @@ type handler struct {
 	bot          *telegram.Bot
 	db           Storager
 	openaiClient OpenAIClient
+	jwtSecret    string
+	botToken     string
 }
 
-func NewHandler(bot *telegram.Bot, db Storager, openaiClient *ai.Client) *handler {
+func NewHandler(
+	bot *telegram.Bot,
+	db Storager,
+	openaiClient *ai.Client,
+	jwtSecret string,
+	botToken string,
+) *handler {
 	return &handler{
 		bot:          bot,
 		db:           db,
 		openaiClient: openaiClient,
+		jwtSecret:    jwtSecret,
+		botToken:     botToken,
 	}
 }
 
@@ -77,23 +92,40 @@ func (h *handler) HandleWebhook(c echo.Context) error {
 
 func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessageParams) {
 	var chatID int64
+	var firstName, lastName *string
+	var username *string
 	if update.Message != nil {
 		chatID = update.Message.From.ID
+		firstName = &update.Message.From.FirstName
+		lastName = &update.Message.From.LastName
+		username = &update.Message.From.UserName
 	} else if update.CallbackQuery != nil {
 		chatID = update.CallbackQuery.From.ID
+		firstName = &update.CallbackQuery.From.FirstName
+		lastName = &update.CallbackQuery.From.LastName
+		username = &update.CallbackQuery.From.UserName
+	}
+
+	if username == nil {
+		usernameFromID := fmt.Sprintf("user_%d", chatID)
+		username = &usernameFromID
 	}
 
 	user, err := h.db.GetUser(chatID)
-
-	log.Printf("User: %v", user)
 
 	msg = &telegram.SendMessageParams{
 		ChatID: chatID,
 	}
 
 	if err != nil && errors.Is(err, db.ErrNotFound) {
+		imgUrl := fmt.Sprintf("%s/avatars/%d.svg", "https://assets.peatch.io", rand.Intn(30)+1)
+
 		newUser := &db.User{
 			TelegramID: chatID,
+			Username:   username,
+			FirstName:  firstName,
+			LastName:   lastName,
+			AvatarURL:  &imgUrl,
 			Level:      db.LevelN5,
 		}
 
@@ -108,6 +140,24 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 		if err != nil {
 			log.Printf("Failed to get user after saving: %v", err)
 			msg.Text = "Ошибка при получении пользователя. Попробуй позже."
+		}
+	} else if err != nil {
+		log.Printf("Failed to get user: %v", err)
+		msg.Text = "Ошибка при получении пользователя. Попробуй позже."
+	} else if user.AvatarURL == nil {
+
+		imgUrl := fmt.Sprintf("%s/avatars/%d.svg", "https://assets.peatch.io", rand.Intn(30)+1)
+
+		newUser := &db.User{
+			TelegramID: chatID,
+			Username:   username,
+			FirstName:  firstName,
+			LastName:   lastName,
+			AvatarURL:  &imgUrl,
+		}
+
+		if err := h.db.UpdateUser(newUser); err != nil {
+			log.Printf("Failed to update user: %v", err)
 		}
 	}
 
@@ -387,6 +437,10 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 				if err := h.db.ClearUserExercise(chatID); err != nil {
 					log.Printf("Failed to save user: %v", err)
 				}
+				// Update rankings
+				if err := h.db.UpdateUserRanking(user.ID, 1); err != nil {
+					log.Printf("Failed to update user ranking: %v", err)
+				}
 			} else {
 				msg.Text = fmt.Sprintf("Неправильно\\.\n\n%s\n%s\n\nПопробуй еще раз:",
 					telegram.EscapeMarkdown(feedback.Comment),
@@ -441,6 +495,10 @@ func (h *handler) handleUpdate(update tgbotapi.Update) (msg *telegram.SendMessag
 				msg.ParseMode = models.ParseModeMarkdown
 				if err := h.db.MarkWordSent(chatID, nextWord.ID); err != nil {
 					log.Printf("Failed to mark word as sent: %v", err)
+				}
+				// Update rankings
+				if err := h.db.UpdateUserRanking(user.ID, 1); err != nil {
+					log.Printf("Failed to update user ranking: %v", err)
 				}
 			} else {
 				msg.Text = fmt.Sprintf("%s\n\nПопробуй еще раз:", res.Comment)
