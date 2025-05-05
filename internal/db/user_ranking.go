@@ -113,7 +113,7 @@ func (s *storage) GetLeaderboard(periodType PeriodType, limit int) ([]Leaderboar
 
 	query := `
 		SELECT 
-			u.id AS user_id,
+			u.telegram_id AS user_id,
 			u.username,
 			u.first_name,
 			u.last_name,
