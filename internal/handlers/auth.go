@@ -15,9 +15,9 @@ import (
 
 type JWTClaims struct {
 	jwt.RegisteredClaims
-   UID     int64 `json:"uid,omitempty"`
-   ChatID  int64 `json:"chat_id,omitempty"`
-   IsAdmin bool  `json:"is_admin,omitempty"`
+	UID     int64 `json:"uid,omitempty"`
+	ChatID  int64 `json:"chat_id,omitempty"`
+	IsAdmin bool  `json:"is_admin,omitempty"`
 }
 
 type AuthTelegramRequest struct {
@@ -60,21 +60,21 @@ func (h *handler) TelegramAuth(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "cannot parse init data from telegram")
 	}
 
+	username := data.User.Username
+	if username == "" {
+		username = "user_" + fmt.Sprintf("%d", data.User.ID)
+	}
+
+	var first, last *string
+	if data.User.FirstName != "" {
+		first = &data.User.FirstName
+	}
+	if data.User.LastName != "" {
+		last = &data.User.LastName
+	}
+
 	user, err := h.db.GetUser(data.User.ID)
 	if err != nil && errors.Is(err, db.ErrNotFound) {
-		username := data.User.Username
-		if username == "" {
-			username = "user_" + fmt.Sprintf("%d", data.User.ID)
-		}
-
-		var first, last *string
-		if data.User.FirstName != "" {
-			first = &data.User.FirstName
-		}
-		if data.User.LastName != "" {
-			last = &data.User.LastName
-		}
-
 		imgUrl := fmt.Sprintf("%s/avatars/%d.svg", "https://assets.peatch.io", rand.Intn(30)+1)
 		create := db.User{
 			Username:   &username,
@@ -94,6 +94,27 @@ func (h *handler) TelegramAuth(c echo.Context) error {
 		}
 	} else if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user").SetInternal(err)
+	}
+
+	if user.Username == nil {
+		imgUrl := fmt.Sprintf("%s/avatars/%d.svg", "https://assets.peatch.io", rand.Intn(30)+1)
+
+		upd := &db.User{
+			TelegramID: data.User.ID,
+			Username:   &username,
+			FirstName:  first,
+			LastName:   last,
+			AvatarURL:  &imgUrl,
+		}
+
+		if err = h.db.UpdateUser(upd); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to update user").SetInternal(err)
+		}
+
+		user, err = h.db.GetUser(data.User.ID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get user").SetInternal(err)
+		}
 	}
 
 	token, err := generateJWT(user.ID, user.TelegramID, h.jwtSecret)

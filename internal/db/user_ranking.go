@@ -74,7 +74,7 @@ func (s *storage) UpdateUserRanking(userID int64, score int) error {
 		}
 		var existingScore int
 		err = s.db.QueryRow(`
-			SELECT score FROM user_rankings 
+			SELECT score FROM user_rankings
 			WHERE user_id = ? AND period_start = ? AND period_end = ? AND period_type = ?`,
 			userID, start, end, typ,
 		).Scan(&existingScore)
@@ -89,7 +89,7 @@ func (s *storage) UpdateUserRanking(userID int64, score int) error {
 		} else if err == nil {
 			// Update existing ranking
 			_, err = s.db.Exec(`
-				UPDATE user_rankings 
+				UPDATE user_rankings
 				SET score = score + ?
 				WHERE user_id = ? AND period_start = ? AND period_end = ? AND period_type = ?`,
 				score, userID, start, end, typ,
@@ -126,6 +126,7 @@ func (s *storage) GetLeaderboard(periodType PeriodType, limit int) ([]Leaderboar
 		WHERE ur.period_type = ?
 		AND ur.period_start >= ?
 		AND ur.period_end <= ?
+		AND u.username IS NOT NULL
 		ORDER BY ur.score DESC
 		LIMIT ?
 	`
